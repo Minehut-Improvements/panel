@@ -52,7 +52,7 @@ export default function Home() {
       <nav className="row-start-0 flex gap-3 mt-4 flex-wrap items-center justify-center">
         <a
           className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors bg-black hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent h-10 sm:h-12 px-4 sm:px-5 flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href=""
+          href="/"
           target="_blank"
           rel="noopener noreferrer"
         >
