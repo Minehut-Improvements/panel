@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff url("/bg.jpg") no-repeat center/cover fixed;
+  --background: #ffffff url("https://files.enderman.ch/wallpapers/Bright%20Moon.jpg") no-repeat center/cover fixed;
   --foreground: #171717;
   --backdrop-blur: blur(5px);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a url("/bg.jpg") no-repeat center/cover fixed;
+    --background: #0a0a0a url("https://files.enderman.ch/wallpapers/Bright%20Moon.jpg") no-repeat center/cover fixed;
     --foreground: #ededed;
     --backdrop-blur: blur(5px);
   }
@@ -21,5 +21,28 @@ body {
   background: var(--background);
   backdrop-filter: var(--backdrop-blur);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.prose {
+  color: white;
+}
+
+.prose table {
+  border-collapse: collapse;
+}
+
+.prose table th,
+.prose table td {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  text-decoration: underline;
 }
 

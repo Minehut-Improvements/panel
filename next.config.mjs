@@ -1,7 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['oddbyte.dev', 'httpfox.gay'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'oddbyte.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: 'httpfox.gay',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.nasa.gov',
+      },
+    ],
   },
 };
 
