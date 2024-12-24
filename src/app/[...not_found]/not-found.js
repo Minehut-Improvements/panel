@@ -19,7 +19,7 @@ export default function NotFound() {
         <h1 className='text-1xl font-bold text-center'>The requested page could not be found.</h1>
       </div>
       <a
-          className="no-underline hover:underline rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors bg-black hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent h-10 sm:h-12 px-4 sm:px-5 flex items-center gap-2 hover:underline hover:underline-offset-4"
+          className="no-underline bg-gray-800/60 rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors bg-black hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent inline-flex h-10 sm:h-10 px-4 sm:px-5 items-center px-3 py-2 text-sm font-medium text-center text-white"
           href="/"
           target="_blank"
           rel="noopener noreferrer"
