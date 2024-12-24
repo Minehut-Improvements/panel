@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Server Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
+    <style>
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        button { padding: 8px 16px; margin: 4px; cursor: pointer; }
+        .online { color: green; }
+        .offline { color: red; }
+        .fade { transition: background-color 0.3s ease; }
+        .highlight { background-color: #f0f8ff; }
+        .popup { 
+            display: none; 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            padding: 20px; 
+            background: white; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+            z-index: 1000; 
+        }
+        .popup input { padding: 8px; margin: 8px 0; width: calc(100% - 16px); }
+        .popup button { margin: 4px; }
+        .overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.5); 
+            z-index: 999; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Server Dashboard</h1>
+    <button onclick="showCreateServerPopup()">Create Server</button>
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="createServerPopup">
+        <h2>Create Server</h2>
+        <input type="text" id="serverName" placeholder="Enter server name" />
+        <button onclick="createServer()">Create</button>
+        <button onclick="closeCreateServerPopup()">Cancel</button>
+    </div>
+    <table id="serverTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Players</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="serverList"></tbody>
+    </table>
+
+    <script>
+        let lastData = {};
+        let updateInterval;
+
+        function createServerRow(server) {
+            return `
+                <tr class="fade" id="server-${server._id}">
+                    <td>${server.name}</td>
+                    <td class="${server.online ? 'online' : 'offline'}">
+                        ${server.online ? 'Online' : 'Offline'}
+                    </td>
+                    <td>${server.player_count}/${server.max_players}</td>
+                    <td>
+                        <button onclick="openServer('${server._id}')">Open</button>
+                        <button onclick="restartServer('${server._id}')" id="restart-${server._id}">Restart</button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function highlightChanges(server, oldServer) {
+            const row = document.getElementById(`server-${server._id}`);
+            if (!row) return;
+
+            if (oldServer) {
+                if (server.online !== oldServer.online || 
+                    server.player_count !== oldServer.player_count) {
+                    row.classList.add('highlight');
+                    setTimeout(() => row.classList.remove('highlight'), 1000);
+                }
+            }
+        }
+
+        async function updateServerList() {
+            try {
+                const response = await axios.get('/getData');
+                const servers = response.data;
+                const tbody = document.getElementById('serverList');
+                
+                let html = '';
+                servers.forEach(server => {
+                    html += createServerRow(server);
+                    highlightChanges(server, lastData[server._id]);
+                    lastData[server._id] = { ...server };
+                });
+                
+                tbody.innerHTML = html;
+            } catch (error) {
+                console.error('Failed to fetch servers:', error);
+            }
+        }
+
+        async function restartServer(id) {
+            const button = document.getElementById(`restart-${id}`);
+            button.disabled = true;
+            button.textContent = 'Restarting...';
+            
+            try {
+                await axios.post(`/proxy/server/${id}/restart`);
+                await updateServerList();
+            } catch (error) {
+                alert('Failed to restart server');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Restart';
+            }
+        }
+
+        function openServer(id) {
+            window.open(`https://api.oddbyte.dev/server/${id}`, '_blank');
+        }
+
+        function showCreateServerPopup() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('createServerPopup').style.display = 'block';
+        }
+
+        function closeCreateServerPopup() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('createServerPopup').style.display = 'none';
+            document.getElementById('serverName').value = '';
+        }
+
+        async function createServer() {
+            const name = document.getElementById('serverName').value.trim();
+            if (!name) {
+                alert('Please enter a valid server name.');
+                return;
+            }
+
+            try {
+                const response = await axios.post('/proxy/servers/create', {
+                    platform: 'java',
+                    name: name,
+                    type: 'PAPER',
+                    version: '6758df37363006319ba4e6e5'
+                });
+
+                if (response.status === 200) {
+                    location.reload();
+                } else {
+                    console.error('Failed to create server:', response);
+                }
+            } catch (error) {
+                console.error('Error creating server:', error);
+            } finally {
+                closeCreateServerPopup();
+            }
+        }
+
+        updateServerList();
+        updateInterval = setInterval(updateServerList, 3000);
+
+        window.onbeforeunload = () => clearInterval(updateInterval);
+    </script>
+</body>
+</html>
