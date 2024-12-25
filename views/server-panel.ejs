@@ -183,7 +183,8 @@
             <button onclick="startServer()">Start</button>
             <button onclick="stopServer()">Stop</button>
             <button onclick="restartServer()">Restart</button>
-            <button onclick="upgradeServer()">Max out server</button>
+            <button onclick="upgradeServer()">Max server upgrades</button>
+            <button onclick="updateServer()">Update to latest server version</button>
             <button onclick="hibernateServer()">Hibernate</button>
             <button onclick="bootServer()">Un-Hibernate</button>
         </div>
@@ -208,6 +209,10 @@
         <div class="card">
             <h3>Custom Ports</h3>
             <div id="port-management-root"></div>
+        </div>
+
+        <div class="card">
+            <div id="email-card-root"></div>
         </div>
 
         <button onclick="window.location.href='/'">Back to Server List</button>
@@ -412,6 +417,25 @@
                 alert('Failed to start server');
             }
         }
+
+        async function resetProps() {
+            fetch(`/proxy/file/${serverId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: '{"files":["/server.properties"]}',
+                credentials: 'include'
+            }).then(fetch(`/proxy/server/${serverId}/edit_server_properties`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: '{"serverProperties":{"max-players":10,"view-distance":6,"gamemode":"survival","difficulty":"easy","spawn-mobs":true,"spawn-animals":true,"force-gamemode":false,"level-type":"default","spawn-npcs":true,"allow-nether":true,"pvp":true,"allow-flight":false,"spawn-protection":16,"announce-player-achievements":true,"enable-command-block":false,"require-resource-pack":false,"hardcore":false,"level-name":"world","max-tick-time":60000,"resource-pack-prompt":"","op-permission-level":4,"entity-broadcast-range-percentage":100,"white-list":false,"snooper-enabled":true,"enforce-whitelist":false,"max-world-size":29999984}}',
+                credentials: 'include'
+            })).then(restartServer()).then(alert('Sucessfully reset server.properties!'));
+        }
+        
         async function bootServer() {
             try {
                 await axios.post(`/proxy/server/${serverId}/start_service`);
@@ -446,6 +470,23 @@
             } catch (error) {
                 alert('Failed to restart server');
             }
+        }
+        
+        async function updateServer() {
+            fetch(`/proxy/v1/server/${serverId}/version/install`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: "PAPER",
+                    version_id: "66ba7dc16b14b54cfc0e4edc"
+                }),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .catch((error) => alert('Error in console') && console.error('Error:', error));
+            resetProps();
         }
 
         async function upgradeServer() {
@@ -697,7 +738,8 @@
 
         return (
             <div className="mt-4 p-4 border rounded">
-                <h2 className="text-xl font-bold mb-4">Server Properties</h2>
+                <h3 className="text-xl font-bold mb-4">Server Properties</h3>
+                <button onClick={resetProps}>Reset server.properties</button>
                 <div className="mb-4">
                     <select
                         value={editMode}
@@ -723,6 +765,67 @@
 
     const root = ReactDOM.createRoot(document.getElementById('server-properties-root'));
     root.render(React.createElement(ServerPropertiesEditor));
+</script>
+<script type="text/babel">
+    function EmailCard() {
+        const [email, setEmail] = useState('');
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState('');
+
+        const handleEmailChange = (e) => {
+            setEmail(e.target.value);
+        };
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            const serverId = window.location.pathname.split('/').pop();
+            setLoading(true);
+            setError('');
+
+            try {
+                await axios.post(`/proxy/v1/server/${serverId}/subuser`, {
+                    user: email
+                });
+                alert('Email submitted successfully');
+            } catch (error) {
+                setError('Failed to submit email');
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        return (
+            <div className="max-w-sm mx-auto mt-10 p-6 border rounded shadow-lg">
+                <h3 className="text-xl font-bold mb-4 text-center">Add Subuser</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                        <input
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={handleEmailChange}
+                            required
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter the email"
+                        />
+                    </div>
+                    {error && <div className="text-red-500 text-sm">{error}</div>}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className={`w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        {loading ? 'Submitting...' : 'Submit'}
+                    </button>
+                </form>
+            </div>
+        );
+    }
+
+    const root_subuser = ReactDOM.createRoot(document.getElementById('email-card-root'));
+    root_subuser.render(React.createElement(EmailCard));
 </script>
 </body>
 </html>
