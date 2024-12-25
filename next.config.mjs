@@ -16,7 +16,14 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://oddbyte-api.deeka.me/:path*'
+      }
+    ];
+  },
 };
 
 export default nextConfig;
-

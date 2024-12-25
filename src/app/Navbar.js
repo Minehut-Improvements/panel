@@ -6,7 +6,6 @@ const Navbar = () => {
       <a
         className="no-underline bg-gray-800/60 rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors bg-black hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] h-10 sm:h-12 px-4 sm:px-5 flex items-center gap-2 hover:underline hover:underline-offset-4"
         href="/"
-        target="_blank"
         rel="noopener noreferrer"
       >
         <Image
@@ -20,8 +19,7 @@ const Navbar = () => {
       </a>
       <a
         className="no-underline bg-gray-800/60 rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors bg-black hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] h-10 sm:h-12 px-4 sm:px-5 flex items-center gap-2 hover:underline hover:underline-offset-4"
-        href="/api"
-        target="_blank"
+        href="/dashboard"
         rel="noopener noreferrer"
       >
         <Image
@@ -31,12 +29,11 @@ const Navbar = () => {
           width={16}
           height={16}
         />
-        API Docs
+        Dashboard
       </a>
       <a
         className="no-underline bg-gray-800/60 rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors bg-black hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] h-10 sm:h-12 px-4 sm:px-5 flex items-center gap-2 hover:underline hover:underline-offset-4"
         href="/links"
-        target="_blank"
         rel="noopener noreferrer"
       >
         <Image
@@ -46,7 +43,7 @@ const Navbar = () => {
           width={16}
           height={16}
         />
-        Useful Links
+        Login
       </a>
     </nav>
   );
