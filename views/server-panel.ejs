@@ -1,41 +1,179 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Server Panel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.20/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
     <style>
-        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
-        .card { border: 1px solid #ddd; padding: 20px; margin: 10px 0; border-radius: 4px; }
-        .status { font-size: 1.2em; margin: 10px 0; }
-        button { padding: 8px 16px; cursor: pointer; margin: 0 5px; }
-        .online { color: green; }
-        .offline { color: red; }
-        .fade { transition: all 0.3s ease; }
-        .highlight { background-color: #f0f8ff; }
-        .console { 
-            background: black;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f8fb;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, h3 {
+            color: #0056b3;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .card {
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .status {
+            font-size: 1.2em;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .online {
+            color: #28a745;
+        }
+
+        .offline {
+            color: #dc3545;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .console {
+            background: #001f3f;
             color: #00ff00;
             font-family: monospace;
             height: 400px;
             overflow-y: scroll;
-            padding: 10px;
+            padding: 15px;
             margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #004080;
         }
+
         .console-input {
             width: 100%;
-            padding: 8px;
+            padding: 12px;
             margin: 10px 0;
-            background: #1a1a1a;
+            background: #004080;
             color: white;
-            border: 1px solid #333;
+            border: 1px solid #003366;
+            border-radius: 4px;
         }
+
         .control-panel {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin: 10px 0;
         }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            resize: none;
+            font-family: Arial, sans-serif;
+            font-size: 1em;
+        }
+
+        select, input[type="text"], input[type="number"], input[type="checkbox"] {
+            font-family: Arial, sans-serif;
+            font-size: 1em;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .mb-4 {
+            margin-bottom: 16px;
+        }
+
+        .text-xl {
+            font-size: 1.5em;
+        }
+
+        .font-bold {
+            font-weight: bold;
+        }
+
+        .p-2 {
+            padding: 8px;
+        }
+
+        .rounded {
+            border-radius: 4px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .grid-cols-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .hover\:bg-blue-600:hover {
+            background-color: #0056b3;
+        }
+
+        .mt-4 {
+            margin-top: 16px;
+        }
+
+        .text-white {
+            color: white;
+        }
+
+        .bg-blue-500 {
+            background-color: #007bff;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Server: <span id="server-name"></span></h1>
@@ -43,9 +181,11 @@
 
         <div class="control-panel">
             <button onclick="startServer()">Start</button>
-            <button onclick="bootServer()">Un-Hibernate</button>
             <button onclick="stopServer()">Stop</button>
             <button onclick="restartServer()">Restart</button>
+            <button onclick="upgradeServer()">Max out server</button>
+            <button onclick="hibernateServer()">Hibernate</button>
+            <button onclick="bootServer()">Un-Hibernate</button>
         </div>
 
         <div class="card">
@@ -59,6 +199,10 @@
             <h3>MOTD Editor</h3>
             <textarea id="motd-input" style="width: 100%; height: 100px;"></textarea>
             <button onclick="updateMOTD()">Update MOTD</button>
+        </div>
+
+        <div class="card">
+            <div id="server-properties-root"></div>
         </div>
 
         <button onclick="window.location.href='/'">Back to Server List</button>
@@ -118,6 +262,7 @@
             ws.onclose = () => {
                 isConnected = false; // Reset the connection flag
                 if (keepAliveInterval) clearInterval(keepAliveInterval); // Stop the keepalive loop
+                window.location.reload();
             };
         }
         
@@ -177,6 +322,35 @@
                 await updateServerInfo();
             } catch (error) {
                 alert('Failed to restart server');
+            }
+        }
+
+        async function hibernateServer() {
+            try {
+                await axios.post(`/proxy/server/${serverId}/destroy_service`);
+                await updateServerInfo();
+            } catch (error) {
+                alert('Failed to restart server');
+            }
+        }
+
+        async function upgradeServer() {
+            try {
+                const payload = {
+                    ram: "gb32",
+                    max_players: "default",
+                    online_status: "always_online",
+                    disk_space: "default",
+                    cpu: "pro",
+                    backups: "standard",
+                    cost: 0,
+                };
+        
+                await axios.post(`/proxy/v1/server/${serverId}/custom_plan`, payload);
+                await updateServerInfo();
+            } catch (error) {
+                alert('Failed to upgrade server');
+                console.log(error);
             }
         }
 
@@ -246,5 +420,195 @@
             ws.close();
         };
     </script>
+
+<script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function ServerPropertiesEditor() {
+        const [editMode, setEditMode] = useState('edit');
+        const [properties, setProperties] = useState({});
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+            const fetchProperties = async () => {
+                const serverId = window.location.pathname.split('/').pop();
+                try {
+                    const response = await axios.get(`/proxy/file/${serverId}/read/server.properties`);
+                    const content = response.data.content;
+                    const parsedProperties = content
+                        .split('\n')
+                        .filter(line => line && !line.startsWith('#'))
+                        .reduce((acc, line) => {
+                            const [key, value] = line.split('=').map(part => part.trim());
+                            acc[key] = isNaN(value) 
+                                ? value === 'true' ? true : value === 'false' ? false : value
+                                : Number(value);
+                            return acc;
+                        }, {});
+                    setProperties(parsedProperties);
+                } catch (error) {
+                    console.error('Failed to fetch server properties', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            fetchProperties();
+        }, []);
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            const serverId = window.location.pathname.split('/').pop();
+            const endpoint = editMode === 'edit' 
+                ? `/proxy/server/${serverId}/edit_server_properties`
+                : `/proxy/server/${serverId}/patch_server_properties`;
+            
+            try {
+                await axios({
+                    method: editMode === 'edit' ? 'POST' : 'PATCH',
+                    url: endpoint,
+                    data: { serverProperties: properties }
+                });
+                restartServer();
+                alert('Server properties updated successfully');
+            } catch (error) {
+                alert('Failed to update server properties');
+                console.error(error);
+            }
+        };
+
+        const handleChange = (name, value) => {
+            setProperties(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        };
+
+        const renderField = (name, type = 'text') => {
+            const label = name.split('-').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+
+            if (type === 'boolean') {
+                return (
+                    <div key={name} className="mb-4">
+                        <label className="block">
+                            <input
+                                type="checkbox"
+                                checked={properties[name]}
+                                onChange={e => handleChange(name, e.target.checked)}
+                                className="mr-2"
+                            />
+                            {label}
+                        </label>
+                    </div>
+                );
+            }
+
+            return (
+                <div key={name} className="mb-4">
+                    <label className="block mb-2">{label}</label>
+                    {type === 'select' ? (
+                        <select
+                            value={properties[name]}
+                            onChange={e => handleChange(name, e.target.value)}
+                            className="w-full p-2 border rounded"
+                        >
+                            {name === 'gamemode' && ['survival', 'creative', 'adventure', 'spectator'].map(mode => (
+                                <option key={mode} value={mode}>{mode}</option>
+                            ))}
+                            {name === 'difficulty' && ['peaceful', 'easy', 'normal', 'hard'].map(diff => (
+                                <option key={diff} value={diff}>{diff}</option>
+                            ))}
+                        </select>
+                    ) : (
+                        <input
+                            type={type}
+                            value={properties[name]}
+                            onChange={e => handleChange(name, type === 'number' ? Number(e.target.value) : e.target.value)}
+                            className="w-full p-2 border rounded"
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        const fields = editMode === 'edit' ? [
+            { name: 'max-players', type: 'number' },
+            { name: 'view-distance', type: 'number' },
+            { name: 'gamemode', type: 'select' },
+            { name: 'difficulty', type: 'select' },
+            { name: 'spawn-monsters', type: 'boolean' },
+            { name: 'spawn-animals', type: 'boolean' },
+            { name: 'force-gamemode', type: 'boolean' },
+            { name: 'level-type', type: 'text' },
+            { name: 'spawn-npcs', type: 'boolean' },
+            { name: 'allow-nether', type: 'boolean' },
+            { name: 'pvp', type: 'boolean' },
+            { name: 'allow-flight', type: 'boolean' },
+            { name: 'spawn-protection', type: 'number' },
+            { name: 'announce-player-achievements', type: 'boolean' },
+            { name: 'enable-command-block', type: 'boolean' },
+            { name: 'require-resource-pack', type: 'boolean' },
+            { name: 'hardcore', type: 'boolean' },
+            { name: 'level-name', type: 'text' },
+            { name: 'max-tick-time', type: 'number' },
+            { name: 'resource-pack-prompt', type: 'text' },
+            { name: 'op-permission-level', type: 'number' },
+            { name: 'entity-broadcast-range-percentage', type: 'number' },
+            { name: 'white-list', type: 'boolean' },
+            { name: 'snooper-enabled', type: 'boolean' },
+            { name: 'enforce-whitelist', type: 'boolean' }
+        ] : [
+            { name: 'max-players', type: 'number' },
+            { name: 'pvp', type: 'boolean' },
+            { name: 'enable-command-block', type: 'boolean' },
+            { name: 'allow-nether', type: 'boolean' },
+            { name: 'white-list', type: 'boolean' },
+            { name: 'enforce-whitelist', type: 'boolean' },
+            { name: 'player-idle-timeout', type: 'number' },
+            { name: 'allow-flight', type: 'boolean' },
+            { name: 'spawn-protection', type: 'number' },
+            { name: 'view-distance', type: 'number' },
+            { name: 'simulation-distance', type: 'number' },
+            { name: 'entity-broadcast-range-percentage', type: 'number' },
+            { name: 'broadcast-console-to-ops', type: 'boolean' },
+            { name: 'op-permission-level', type: 'number' },
+            { name: 'function-permission-level', type: 'number' }
+        ];
+
+        if (loading) {
+            return <div>Loading server properties...</div>;
+        }
+
+        return (
+            <div className="mt-4 p-4 border rounded">
+                <h2 className="text-xl font-bold mb-4">Server Properties</h2>
+                <div className="mb-4">
+                    <select
+                        value={editMode}
+                        onChange={(e) => setEditMode(e.target.value)}
+                        className="p-2 border rounded"
+                    >
+                        <option value="edit">Full Edit Mode</option>
+                        <option value="patch">Limited Patch Mode</option>
+                    </select>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-2 gap-4">
+                        {fields.map(field => renderField(field.name, field.type))}
+                    </div>
+                    <button type="submit" className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Save Properties
+                    </button>
+                </form>
+            </div>
+        );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('server-properties-root'));
+    root.render(React.createElement(ServerPropertiesEditor));
+</script>
 </body>
 </html>
