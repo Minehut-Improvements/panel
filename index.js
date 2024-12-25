@@ -163,7 +163,6 @@ app.ws('/proxy/server/:id/console', function (ws, req) {
     });
 });
 
-// Proxy all requests to api.dev.minehut.com
 app.use('/proxy/*', async (req, res) => {
     const minehutId = req.cookies.minehut_id;
     const token = req.cookies.token;
@@ -181,23 +180,75 @@ app.use('/proxy/*', async (req, res) => {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-                'x-profile-id': profileId,  // Corrected to use profileId
+                'x-profile-id': profileId,
                 'x-session-id': sessionId 
             },
             data: req.body // Forward the request body if it's a POST request
         });
 
+        // Send back the data from the external API if the request is successful
         res.json(response.data);
     } catch (error) {
-        if (error.response && error.response.data && error.response.data.expired) {
-            // Clear cookies and respond to the frontend
-            res.clearCookie('minehut_id');
-            res.clearCookie('token');
-            res.clearCookie('sessionId');
-            res.clearCookie('profile_id');
-            res.status(401).send('Session expired. Please log in again.');
+        if (error.response) {
+            // Handle session expired error by clearing cookies
+            if (error.response.data && error.response.data.expired) {
+                res.clearCookie('minehut_id');
+                res.clearCookie('token');
+                res.clearCookie('sessionId');
+                res.clearCookie('profile_id');
+                return res.status(401).send('Session expired. Please log in again.');
+            }
+
+            // For all other non-OK responses, send back the response data or error
+            return res.status(error.response.status).json(error.response.data);
         } else {
-            res.status(500).send(error);
+            // Handle cases where the error doesn't have a response (e.g., network issues)
+            return res.status(500).send(error.message || 'An unknown error occurred.');
+        }
+    }
+});
+
+app.use('/manager/:id*', async (req, res) => {
+    const minehutId = req.cookies.minehut_id;
+    const token = req.cookies.token;
+    const sessionId = req.cookies.sessionId;
+    const profileId = req.cookies.profile_id;
+
+    if (!minehutId || !token || !sessionId || !profileId) {
+        return res.status(401).send('Session expired. Please log in.');
+    }
+
+    try {
+        const response = await axios({
+            method: req.method,
+            url: `https://${req.params.id}.manager.dev.minehut.com${req.originalUrl.replace(`/manager/${req.params.id}`, '')}`,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                'x-profile-id': profileId,
+                'x-session-id': sessionId 
+            },
+            data: req.body // Forward the request body if it's a POST request
+        });
+
+        // Send back the data from the external API if the request is successful
+        res.json(response.data);
+    } catch (error) {
+        if (error.response) {
+            // Handle session expired error by clearing cookies
+            if (error.response.data && error.response.data.expired) {
+                res.clearCookie('minehut_id');
+                res.clearCookie('token');
+                res.clearCookie('sessionId');
+                res.clearCookie('profile_id');
+                return res.status(401).send('Session expired. Please log in again.');
+            }
+
+            // For all other non-OK responses, send back the response data or error
+            return res.status(error.response.status).json(error.response.data);
+        } else {
+            // Handle cases where the error doesn't have a response (e.g., network issues)
+            return res.status(500).send(error.message || 'An unknown error occurred.');
         }
     }
 });
