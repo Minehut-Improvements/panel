@@ -149,11 +149,9 @@ app.ws('/proxy/server/:id/console', function (ws, req) {
     // Close connections on either side
     ws.on('close', () => {
         clientWs.close();
-        console.log('WebSocket connection closed from client side.');
     });
     clientWs.on('close', () => {
         ws.close();
-        console.log('WebSocket connection closed from server side.');
     });
 
     // Handle WebSocket errors
@@ -199,7 +197,7 @@ app.use('/proxy/*', async (req, res) => {
             res.clearCookie('profile_id');
             res.status(401).send('Session expired. Please log in again.');
         } else {
-            res.status(500).send('Error proxying request to Minehut API.');
+            res.status(500).send(error);
         }
     }
 });
@@ -215,4 +213,3 @@ app.get('/server/:id', (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
-
