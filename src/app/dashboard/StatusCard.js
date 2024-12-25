@@ -5,6 +5,11 @@ const StatusCard = ({ name, status, serverId, setResponseMessage }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleActivateClick = async () => {
+    if (status === "Online") {
+      window.location.href = `/dashboard/manage/${serverId}`;
+      return;
+    }
+
     setIsLoading(true);
     setResponseMessage("");
 
@@ -32,10 +37,6 @@ const StatusCard = ({ name, status, serverId, setResponseMessage }) => {
       setIsLoading(false);
     }
   };
-
-  function refreshPage() {
-    window.location.reload(false);
-  }
 
   return (
     <div className="flex items-center justify-between bg-gray-800/60 text-white p-4 rounded-lg shadow-md w-full max-w-prose">
@@ -86,14 +87,12 @@ const StatusCard = ({ name, status, serverId, setResponseMessage }) => {
         <button
           onClick={handleActivateClick}
           disabled={isLoading}
-          className="no-underline bg-gray-800/60 rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors bg-black hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] inline-flex h-10 sm:h-10 px-4 sm:px-5 items-center px-3 py-2 text-sm font-medium text-center text-white"
+          className="no-underline bg-gray-800/60 rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors bg-black hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] inline-flex h-10 sm:h-10 px-4 sm:px-5 items-center text-sm font-medium text-white"
         >
           {isLoading
             ? "Starting..."
             : status === "Online"
             ? "Manage"
-            : status === "Starting..."
-            ? "Starting..."
             : "Activate"}
         </button>
       </div>
@@ -108,10 +107,9 @@ const App = () => {
   const [responseMessage, setResponseMessage] = useState("");
 
   useEffect(() => {
-    // Check if cookies are set
     const cookies = document.cookie;
     if (!cookies) {
-      window.location.href = "/login"; // Redirect to /login if no cookies are set
+      window.location.href = "/login";
     }
 
     const fetchData = async () => {
@@ -139,6 +137,12 @@ const App = () => {
     };
 
     fetchData();
+
+    const intervalId = setInterval(() => {
+      fetchData();
+    }, 1000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleCloseAlert = () => {
@@ -146,11 +150,27 @@ const App = () => {
   };
 
   if (loading) {
-    return <p className="text-white">Loading...</p>;
+    return (
+      <div className="text-center bg-gray-800/60 text-white p-4 rounded-lg shadow-md w-full max-w-prose">
+        <h5 className="mb-2 text-2xl font-bold">Please wait.</h5>
+        <p>Please wait while we are loading the data...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <p className="text-red-500">Error: {error}</p>;
+    return (
+      <div className="text-center bg-gray-800/60 text-white p-4 rounded-lg shadow-md w-full max-w-prose">
+        <h5 className="mb-2 text-2xl font-bold">Oops, there's an error</h5>
+        <p>There was an error: <span className="text-red-500">{error}</span></p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Refresh
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -161,17 +181,13 @@ const App = () => {
       {data.map((item, index) => (
         <StatusCard
           key={index}
-          name={item.name || "Failed :("}
+          name={item.name || "Unknown"}
           status={
             item.status === "SERVICE_OFFLINE"
               ? "Offline"
               : item.status === "ONLINE"
               ? "Online"
-              : item.status === "SERVICE_STARTING"
-              ? "Starting..."
-              : item.status === "STARTING"
-              ? "Starting..."
-              : item.status || "Unknown"
+              : "Starting..."
           }
           serverId={item._id}
           setResponseMessage={setResponseMessage}

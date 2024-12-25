@@ -2,24 +2,37 @@ import React, { useEffect, useState } from 'react';
 
 const AlertBox = ({ message, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const [position, setPosition] = useState(0);
 
-  // Automatically fade the alert in after 0.5 seconds and close after 3 seconds
+  useEffect(() => {
+    const handleScroll = () => {
+      setPosition(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Set initial position
+    setPosition(window.scrollY);
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onClose, 300); // Close the alert after fading out (this can be adjusted)
-    }, 3000); // Adjust this time as needed (in milliseconds)
-
-    // Cleanup timeout on unmount or if the alert is dismissed early
+      setTimeout(onClose, 300);
+    }, 3000);
     return () => clearTimeout(timer);
   }, [onClose]);
 
   return (
     <div
-      className={`fixed top-0 left-1/2 transform -translate-x-1/2 w-auto max-w-md p-4 transition-opacity duration-500 ${
+      className={`absolute left-1/2 transform -translate-x-1/2 w-auto max-w-md p-4 transition-opacity duration-500 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
-      style={{ zIndex: 9999 }} // Ensures the alert stays on top
+      style={{
+        zIndex: 9999,
+        top: `${position}px`, // Update top position based on scroll
+      }}
     >
       <div className="backdrop-blur-sm bg-gray-800/60 text-white p-4 rounded-lg shadow-lg flex items-center space-x-4">
         <svg
