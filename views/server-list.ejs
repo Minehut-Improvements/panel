@@ -1,62 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html class="h-full">
 <head>
     <title>Server Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        button { padding: 8px 16px; margin: 4px; cursor: pointer; }
-        .online { color: green; }
-        .offline { color: red; }
-        .fade { transition: background-color 0.3s ease; }
-        .highlight { background-color: #f0f8ff; }
-        .popup { 
-            display: none; 
-            position: fixed; 
-            top: 50%; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            padding: 20px; 
-            background: white; 
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
-            z-index: 1000; 
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://api.oddbyte.dev/img/BrightMoon.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
-        .popup input { padding: 8px; margin: 8px 0; width: calc(100% - 16px); }
-        .popup button { margin: 4px; }
-        .overlay { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0, 0, 0, 0.5); 
-            z-index: 999; 
+        .fade { transition: all 0.3s ease; }
+        .highlight { @apply bg-blue-900 bg-opacity-20; }
+        .glass-effect {
+            background: rgba(17, 25, 40, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.125);
+        }
+        .btn {
+            @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800;
+        }
+        .btn-primary {
+            @apply btn bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white focus:ring-blue-500;
+        }
+        .btn-secondary {
+            @apply btn bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-gray-100 focus:ring-gray-500;
+        }
+        .table-row-alt:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
         }
     </style>
 </head>
-<body>
-    <h1>Server Dashboard</h1>
-    <button onclick="showCreateServerPopup()">Create Server</button>
-    <div class="overlay" id="overlay"></div>
-    <div class="popup" id="createServerPopup">
-        <h2>Create Server</h2>
-        <input type="text" id="serverName" placeholder="Enter server name" />
-        <button onclick="createServer()">Create</button>
-        <button onclick="closeCreateServerPopup()">Cancel</button>
+<body class="h-full flex flex-col items-center justify-center p-8 text-white">
+    <div class="w-full max-w-4xl space-y-8">
+        <div class="text-center space-y-4">
+            <h1 class="text-4xl font-bold">Server Dashboard</h1>
+            <p class="text-gray-300">Welcome to Server Dashboard. This is where you can control your server.</p>
+            <button onclick="showCreateServerPopup()" class="btn-primary flex items-center gap-2 mx-auto">
+                <span>Create Server</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+            </button>
+        </div>
+
+        <div id="errorMessage" class="hidden glass-effect p-8 rounded-xl text-center space-y-4">
+            <h2 class="text-2xl font-bold">Oops, there's an error</h2>
+            <p>There was an error: <span class="text-red-400">Failed to fetch</span></p>
+            <button onclick="updateServerList()" class="btn-primary">
+                Refresh
+            </button>
+        </div>
+
+        <div class="glass-effect rounded-xl overflow-hidden">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="px-6 py-4 text-left font-medium text-gray-300">Name</th>
+                        <th class="px-6 py-4 text-left font-medium text-gray-300">Status</th>
+                        <th class="px-6 py-4 text-left font-medium text-gray-300">Players</th>
+                        <th class="px-6 py-4 text-left font-medium text-gray-300">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="serverList"></tbody>
+            </table>
+        </div>
     </div>
-    <table id="serverTable">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Players</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="serverList"></tbody>
-    </table>
+
+    <div id="overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+    <div id="createServerPopup" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-effect p-8 rounded-xl shadow-2xl w-96">
+        <h2 class="text-2xl font-bold mb-4">Create Server</h2>
+        <input type="text" id="serverName" placeholder="Enter server name" class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 mb-4 border border-gray-600 focus:border-blue-500 focus:outline-none">
+        <div class="flex gap-2">
+            <button onclick="createServer()" class="btn-primary flex-1">Create</button>
+            <button onclick="closeCreateServerPopup()" class="btn-secondary flex-1">Cancel</button>
+        </div>
+    </div>
 
     <script>
         let lastData = {};
