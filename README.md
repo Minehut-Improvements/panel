@@ -2,4 +2,4 @@
 
 This is the api layer for our frontend.
 
-Frontend branch: [https://github.com/Minehut-Improvements/panel/tree/frontend](https://github.com/Minehut-Improvements/panel/tree/frontend)
+Frontend is in the `views/` folder.
