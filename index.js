@@ -5,21 +5,12 @@ const path = require('path');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const expressWs = require('express-ws');
 const WebSocket = require('ws');
-const cors = require('cors');
 
 const app = express();
 const port = 5050;
 
 
-// Middleware & CORS
-app.use(
-    cors({
-      origin: (origin, callback) => {
-        callback(null, origin); // Reflect the incoming origin
-      },
-      credentials: true, // Allow cookies and credentials
-    })
-  );
+// Middleware
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
