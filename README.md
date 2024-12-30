@@ -1,7 +1,5 @@
 # Our take on the Minehut Panel
 
-This is a test branch for the new frontend!
+This is the api layer for our frontend.
 
-I don't think it would work that well but I'll try!
-
-Panel Repo: https://github.com/UnitieG/minehut-improvements
+Frontend branch: [https://github.com/Minehut-Improvements/panel/tree/frontend](https://github.com/Minehut-Improvements/panel/tree/frontend)
