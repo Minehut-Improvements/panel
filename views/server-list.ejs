@@ -125,7 +125,7 @@
         async function updateServerList(setLoading = true) {
             try {
                 const tbody = document.getElementById('serverList');
-                if (setLoading) tbody.innerHTML = '<h2 class="px-6 py-4 font-medium text-gray-300">Loading...</h2>';
+                if (setLoading) tbody.innerHTML = '<h2 class="px-6 py-4 font-medium text-gray-500">Loading...</h2>';
                 const response = await axios.get('/getData');
                 const servers = response.data;
                 
@@ -185,7 +185,7 @@
         }
 
         updateServerList();
-        updateInterval = setInterval(updateServerList(false), 3000);
+        updateInterval = setInterval( () => {updateServerList(false)}, 3000);
 
         window.onbeforeunload = () => clearInterval(updateInterval);
     </script>
