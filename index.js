@@ -21,8 +21,113 @@ expressWs(app);
 // Serve the main page (simple frontend)
 app.get('/', async (req, res) => {
     if (!req.cookies.minehut_id || !req.cookies.token || !req.cookies.sessionId || !req.cookies.profile_id) {
-        return res.send('Please log in first.');
-    }
+        return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: url('https://api.oddbyte.dev/img/BrightMoon.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(13, 17, 23, 0.8);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        h1, h3 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #2ea043;
+        }
+
+        a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .instructions {
+            font-size: 1.1em;
+            margin: 15px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Welcome</h1>
+            <p class="instructions">To proceed, follow these two steps:</p>
+            <div class="instructions">
+                <h3>Step 1: Install the Extension</h3>
+                <p>
+                    Download and install the extension from 
+                    <a href="https://github.com/Minehut-Improvements/panel/tree/extension" target="_blank">
+                        GitHub Repository
+                    </a>.
+                </p>
+                <h3>Step 2: Log In</h3>
+                <p>
+                    Log in at 
+                    <a href="https://gqgn0edrg67vnqh.minehut.app/" target="_blank">
+                        Minehut Login Page
+                    </a>.
+                </p>
+            </div>
+            <button onclick="checkCompletion()">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        function checkCompletion() {
+            const extensionInstalled = confirm("Have you installed the extension?");
+            if (extensionInstalled) {
+                window.location.href = "https://gqgn0edrg67vnqh.minehut.app/";
+            } else {
+                alert("Please install the extension before proceeding.");
+            }
+        }
+    </script>
+</body>
+</html>`
+);}
 
     const minehutId = req.cookies.minehut_id;
     const token = req.cookies.token;
@@ -264,3 +369,4 @@ app.get('/server/:id', (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
+

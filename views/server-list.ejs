@@ -92,7 +92,6 @@
                     <td>${server.player_count}/${server.max_players}</td>
                     <td>
                         <button onclick="openServer('${server._id}')">Open</button>
-                        <button onclick="restartServer('${server._id}')" id="restart-${server._id}">Restart</button>
                     </td>
                 </tr>
             `;
@@ -127,22 +126,6 @@
                 tbody.innerHTML = html;
             } catch (error) {
                 console.error('Failed to fetch servers:', error);
-            }
-        }
-
-        async function restartServer(id) {
-            const button = document.getElementById(`restart-${id}`);
-            button.disabled = true;
-            button.textContent = 'Restarting...';
-            
-            try {
-                await axios.post(`/proxy/server/${id}/restart`);
-                await updateServerList();
-            } catch (error) {
-                alert('Failed to restart server');
-            } finally {
-                button.disabled = false;
-                button.textContent = 'Restart';
             }
         }
 
