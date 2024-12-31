@@ -507,16 +507,54 @@
 
         function updateDOM(server) {
             document.getElementById('server-name').textContent = server.name;
-            
+
             const infoCard = document.getElementById('server-info');
+            
+            let statusText = '';
+            let statusClass = '';
+            
+            if (server.suspended) {
+                statusText = 'Suspended';
+                statusClass = 'offline';
+            } else {
+                switch (server.status) {
+                    case 'SERVICE_OFFLINE':
+                        statusText = 'Hibernating';
+                        statusClass = 'offline';
+                        break;
+                    case 'OFFLINE':
+                        statusText = 'Offline';
+                        statusClass = 'offline';
+                        break;
+                    case 'STARTING':
+                        statusText = 'Starting';
+                        statusClass = 'online';
+                        break;
+                    case 'ONLINE':
+                        statusText = 'Online';
+                        statusClass = 'online';
+                        break;
+                    case 'STOPPING':
+                        statusText = 'Stopping';
+                        statusClass = 'offline';
+                        break;
+                    default:
+                        statusText = 'Unknown';
+                        statusClass = 'offline';
+                        break;
+                }
+            }
+            
             const newHtml = `
-                <div class="status ${server.online ? 'online' : 'offline'}">
-                    Status: ${server.online ? 'Online' : 'Offline'}
+                <div class="status ${statusClass}">
+                    Status: ${statusText}
                 </div>
                 <div>Players: ${server.player_count}/${server.max_players}</div>
                 <div>RAM: ${(server.max_ram / 1024).toFixed(1)} GB</div>
                 <div>Version: ${server.server_version?.version || 'Unknown'}</div>
             `;
+            
+            infoCard.innerHTML = newHtml;
 
             if (lastData && (
                 server.online !== lastData.online ||

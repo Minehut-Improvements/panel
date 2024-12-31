@@ -12,7 +12,7 @@
             background-attachment: fixed;
         }
         .fade { transition: all 0.3s ease; }
-        .highlight { @apply bg-blue-900 bg-opacity-20; }
+        .highlight { background: rgba(56, 189, 248, 0.1); }
         .glass-effect {
             background: rgba(17, 25, 40, 0.75);
             backdrop-filter: blur(12px);
@@ -27,8 +27,17 @@
         .btn-secondary {
             @apply btn bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-gray-100 focus:ring-gray-500;
         }
-        .table-row-alt:nth-child(even) {
-            background: rgba(255, 255, 255, 0.03);
+        .table-row {
+            @apply transition-colors hover:bg-gray-700 hover:bg-opacity-30;
+        }
+        .status-online {
+            @apply text-green-400 font-semibold;
+        }
+        .status-offline {
+            @apply text-red-400 font-semibold;
+        }
+        .action-btn {
+            @apply text-sm px-3 py-1 rounded-full font-medium bg-blue-500 text-white hover:bg-blue-400 active:bg-blue-600;
         }
     </style>
 </head>
@@ -36,7 +45,7 @@
     <div class="w-full max-w-4xl space-y-8">
         <div class="text-center space-y-4">
             <h1 class="text-4xl font-bold">Server Dashboard</h1>
-            <p class="text-gray-300">Welcome to Server Dashboard. This is where you can control your server.</p>
+            <p class="text-gray-300">Welcome to the Server Dashboard. Control and monitor your servers here.</p>
             <button onclick="showCreateServerPopup()" class="btn-primary flex items-center gap-2 mx-auto">
                 <span>Create Server</span>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,13 +63,13 @@
         </div>
 
         <div class="glass-effect rounded-xl overflow-hidden">
-            <table class="w-full">
-                <thead>
-                    <tr class="border-b border-gray-700">
-                        <th class="px-6 py-4 text-left font-medium text-gray-300">Name</th>
-                        <th class="px-6 py-4 text-left font-medium text-gray-300">Status</th>
-                        <th class="px-6 py-4 text-left font-medium text-gray-300">Players</th>
-                        <th class="px-6 py-4 text-left font-medium text-gray-300">Actions</th>
+            <table class="w-full text-left">
+                <thead class="bg-gray-800 bg-opacity-50">
+                    <tr>
+                        <th class="px-6 py-4 font-medium text-gray-300">Name</th>
+                        <th class="px-6 py-4 font-medium text-gray-300">Status</th>
+                        <th class="px-6 py-4 font-medium text-gray-300">Players</th>
+                        <th class="px-6 py-4 font-medium text-gray-300">Open</th>
                     </tr>
                 </thead>
                 <tbody id="serverList"></tbody>
@@ -83,15 +92,48 @@
         let updateInterval;
 
         function createServerRow(server) {
+            let statusText = '';
+            let statusClass = '';
+        
+            if (server.suspended) {
+                statusText = 'Suspended';
+                statusClass = 'status-offline';
+            } else {
+                switch (server.status) {
+                    case 'SERVICE_OFFLINE':
+                        statusText = 'Hibernating';
+                        statusClass = 'status-offline';
+                        break;
+                    case 'OFFLINE':
+                        statusText = 'Offline';
+                        statusClass = 'status-offline';
+                        break;
+                    case 'STARTING':
+                        statusText = 'Starting';
+                        statusClass = 'status-starting';
+                        break;
+                    case 'ONLINE':
+                        statusText = 'Online';
+                        statusClass = 'status-online';
+                        break;
+                    case 'STOPPING':
+                        statusText = 'Stopping';
+                        statusClass = 'status-stopping';
+                        break;
+                    default:
+                        statusText = 'Unknown';
+                        statusClass = 'status-offline';
+                        break;
+                }
+            }
+        
             return `
-                <tr class="fade" id="server-${server._id}">
-                    <td>${server.name}</td>
-                    <td class="${server.online ? 'online' : 'offline'}">
-                        ${server.online ? 'Online' : 'Offline'}
-                    </td>
-                    <td>${server.player_count}/${server.max_players}</td>
-                    <td>
-                        <button onclick="openServer('${server._id}')">Open</button>
+                <tr class="table-row fade" id="server-${server._id}">
+                    <td class="px-6 py-4">${server.name}</td>
+                    <td class="px-6 py-4 ${statusClass}">${statusText}</td>
+                    <td class="px-6 py-4">${server.player_count}/${server.max_players}</td>
+                    <td class="px-6 py-4">
+                        <button class="action-btn" onclick="openServer('${server._id}')">Open</button>
                     </td>
                 </tr>
             `;
@@ -156,7 +198,7 @@
                     platform: 'java',
                     name: name,
                     type: 'PAPER',
-                    version: '6758df37363006319ba4e6e5'
+                    version: '66ba7dc16b14b54cfc0e4edc'
                 });
 
                 if (response.status === 200) {
