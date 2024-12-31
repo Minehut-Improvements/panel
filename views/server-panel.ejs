@@ -354,15 +354,19 @@
                     consoleDiv.innerHTML = '';
                     data.data.forEach(data => {
                         if (data.type === 'console:std') {
-                            appendConsoleMessage(data);
+                            appendConsoleMessage(data, false);
                         } else if (data.type === 'console:cmdran') {
                             appendConsoleMessage(data, true);
+                        } else if (data.type === 'console:err') {
+                            appendConsoleMessage(data, false, true);
                         }
                     });
                 } else if (data.type === 'console:std') {
-                    appendConsoleMessage(data);
+                    appendConsoleMessage(data, false);
                 } else if (data.type === 'console:cmdran') {
                     appendConsoleMessage(data, true);
+                } else if (data.type === 'console:err') {
+                    appendConsoleMessage(data, false, true);
                 }
             };
         
@@ -375,11 +379,14 @@
             };
         }
         
-        function appendConsoleMessage(msg, isCmdran = false) {
+        function appendConsoleMessage(msg, isCmdran, isErr = false) {
             const consoleDiv = document.getElementById('console');
             const msgDiv = document.createElement('div');
             if (isCmdran) {
                 msgDiv.textContent = '> ' + msg.data.msg;
+            } else if (isErr) {
+                msgDiv.textContent = msg.data.msg;
+                msgDiv.style.color = 'red';
             } else {
                 msgDiv.textContent = msg.data.msg;
             }
