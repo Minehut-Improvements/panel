@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="h-full bg-cover bg-fixed" style="background-image: url('https://api.oddbyte.dev/img/BrightMoon.jpg');">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://oddbyte.dev/js/cursor.js"></script>
+    <link rel="stylesheet" href="https://oddbyte.dev/styles/cursor.css">
+</head>
+<body class="h-full flex flex-col text-white">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Navigation Card -->
+        <div class="bg-black bg-opacity-70 rounded-lg shadow-lg p-2 mb-8">
+            <div class="flex space-x-8 justify-center">
+                <a href="/server/<%= serverId %>/console" class="<%= page === 'console' ? 'text-blue-400 border-blue-400' : 'text-gray-300 border-transparent hover:text-white hover:border-gray-400' %> py-4 px-6 border-b-2 font-medium transition-colors duration-200">
+                    Console
+                </a>
+                <a href="/server/<%= serverId %>/settings" class="<%= page === 'settings' ? 'text-blue-400 border-blue-400' : 'text-gray-300 border-transparent hover:text-white hover:border-gray-400' %> py-4 px-6 border-b-2 font-medium transition-colors duration-200">
+                    Settings
+                </a>
+                <a href="/server/<%= serverId %>/stats" class="<%= page === 'stats' ? 'text-blue-400 border-blue-400' : 'text-gray-300 border-transparent hover:text-white hover:border-gray-400' %> py-4 px-6 border-b-2 font-medium transition-colors duration-200">
+                    Stats
+                </a>
+                <a href="/server/<%= serverId %>/files" class="<%= page === 'file' ? 'text-blue-400 border-blue-400' : 'text-gray-300 border-transparent hover:text-white hover:border-gray-400' %> py-4 px-6 border-b-2 font-medium transition-colors duration-200">
+                    Files
+                </a>
+            </div>
+        </div>
+
+        <!-- Server Info Card -->
+        <div class="bg-black bg-opacity-70 rounded-lg shadow-lg p-6 mb-8">
+            <h1 class="text-3xl font-bold mb-6" id="server-name"></h1>
+            
+            <div class="space-y-4">
+                <div id="server-info" class="space-y-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-gray-300">Status:</span>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium status"></span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <div class="text-gray-400 text-sm">Players</div>
+                            <div class="text-xl font-semibold players"></div>
+                        </div>
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <div class="text-gray-400 text-sm">RAM</div>
+                            <div class="text-xl font-semibold ram"></div>
+                        </div>
+                        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                            <div class="text-gray-400 text-sm">Version</div>
+                            <div class="text-xl font-semibold version"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="flex items-center justify-center gap-4">
+                    <button onclick="startServer()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Start</button>
+                    <button onclick="stopServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Stop</button>
+                    <button onclick="restartServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Restart</button>
+                    <button onclick="hibernateServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Hibernate</button>
+                    <button onclick="bootServer()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Un-Hibernate</button>
+                    <button onclick="updateServer()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Update Server</button>
+                    <button onclick="upgradeServer()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Max Upgrades</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const serverId = window.location.pathname.split('/')[2];
+            let lastData = null;
+            let updateInterval;
+    
+            async function startServer() {
+                try {
+                    await axios.post(`/proxy/server/${serverId}/start`);
+                    await updateServerInfo();
+                } catch (error) {
+                    alert('Failed to start server');
+                }
+            }
+    
+            async function resetProps() {
+                fetch(`/proxy/file/${serverId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: '{"files":["/server.properties"]}',
+                    credentials: 'include'
+                }).then(fetch(`/proxy/server/${serverId}/edit_server_properties`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: '{"serverProperties":{"max-players":10,"view-distance":6,"gamemode":"survival","difficulty":"easy","spawn-mobs":true,"spawn-animals":true,"force-gamemode":false,"level-type":"default","spawn-npcs":true,"allow-nether":true,"pvp":true,"allow-flight":false,"spawn-protection":16,"announce-player-achievements":true,"enable-command-block":false,"require-resource-pack":false,"hardcore":false,"level-name":"world","max-tick-time":60000,"resource-pack-prompt":"","op-permission-level":4,"entity-broadcast-range-percentage":100,"white-list":false,"snooper-enabled":true,"enforce-whitelist":false,"max-world-size":29999984}}',
+                    credentials: 'include'
+                })).then(restartServer()).then(alert('Sucessfully reset server.properties!'));
+            }
+            
+            async function bootServer() {
+                try {
+                    await axios.post(`/proxy/server/${serverId}/start_service`);
+                    await updateServerInfo();
+                } catch (error) {
+                    alert('Failed to boot server');
+                }
+            }
+    
+            async function stopServer() {
+                try {
+                    await axios.post(`/proxy/server/${serverId}/shutdown`);
+                    await updateServerInfo();
+                } catch (error) {
+                    alert('Failed to stop server');
+                }
+            }
+    
+            async function restartServer() {
+                try {
+                    await axios.post(`/proxy/server/${serverId}/restart`);
+                    await updateServerInfo();
+                } catch (error) {
+                    alert('Failed to restart server');
+                }
+            }
+    
+            async function hibernateServer() {
+                try {
+                    await axios.post(`/proxy/server/${serverId}/destroy_service`);
+                    await updateServerInfo();
+                } catch (error) {
+                    alert('Failed to restart server');
+                }
+            }
+            
+            async function updateServer() {
+                fetch(`/proxy/v1/server/${serverId}/version/install`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: "PAPER",
+                        version_id: "66ba7dc16b14b54cfc0e4edc"
+                    }),
+                    credentials: 'include'
+                })
+                .then(response => response.json())
+                .catch((error) => alert('Error in console') && console.error('Error:', error));
+                resetProps();
+            }
+    
+            async function upgradeServer() {
+                try {
+                    const payload = {
+                        ram: "gb32",
+                        max_players: "default",
+                        online_status: "always_online",
+                        disk_space: "default",
+                        cpu: "pro",
+                        backups: "standard",
+                        cost: 0,
+                    };
+            
+                    await axios.post(`/proxy/v1/server/${serverId}/custom_plan`, payload);
+                    await updateServerInfo();
+                } catch (error) {
+                    alert('Failed to upgrade server');
+                    console.log(error);
+                }
+            }
+    
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+            }
+    
+            function updateDOM(server) {
+                document.getElementById('server-name').textContent = `Server: ${server.name}`;
+                
+                let statusText = '';
+                let statusClass = '';
+                
+                if (server.suspended) {
+                    statusText = 'Suspended';
+                    statusClass = 'bg-red-500';
+                } else {
+                    switch (server.status) {
+                        case 'SERVICE_OFFLINE':
+                            statusText = 'Hibernating';
+                            statusClass = 'bg-gray-500';
+                            break;
+                        case 'OFFLINE':
+                            statusText = 'Offline';
+                            statusClass = 'bg-red-500';
+                            break;
+                        case 'STARTING':
+                            statusText = 'Starting';
+                            statusClass = 'bg-yellow-500';
+                            break;
+                        case 'ONLINE':
+                            statusText = 'Online';
+                            statusClass = 'bg-green-500';
+                            break;
+                        default:
+                            statusText = server.status;
+                            statusClass = 'bg-gray-500';
+                    }
+                }
+                
+                document.querySelector('.status').textContent = statusText;
+                document.querySelector('.status').className = `px-3 py-1 rounded-full text-sm font-medium status ${statusClass}`;
+                document.querySelector('.players').textContent = `${server.player_count}/${server.max_players}`;
+                document.querySelector('.ram').textContent = `${(server.max_ram / 1024).toFixed(1)} GB`;
+                document.querySelector('.version').textContent = server.server_version?.version || 'Unknown';
+            }
+    
+            async function updateServerInfo() {
+                try {
+                    const response = await axios.get('/getData');
+                    const server = response.data.find(s => s._id === serverId);
+                    if (!server) return alert('Server not found');
+                    
+                    updateDOM(server);
+                    lastData = { ...server };
+                } catch (error) {
+                    console.error('Failed to fetch server data:', error);
+                }
+            }
+    
+            updateServerInfo();
+            updateInterval = setInterval(updateServerInfo, 3000);
+            window.onbeforeunload = () => {
+                clearInterval(updateInterval);
+            }
+        </script>
+        <div id="dynamic_content"><%- include(page) %></div>
+    </div>
+    <div hidden class="cursor"></div>
+    <div hidden class="cursor-inner"></div>
+</body>
+</html>

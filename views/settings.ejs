@@ -1,0 +1,173 @@
+<div id="server-properties" class="mt-4 p-4 rounded">
+    <h3 class="text-xl font-bold mb-4">Server Properties</h3>
+    <button onclick="resetProps()" class="mb-4 bg-green-600 hover:bg-green-700">Reset server.properties</button>
+    
+    <select id="edit-mode" class="w-full p-2 mb-4 bg-opacity-30 bg-gray-900 border border-gray-600 rounded">
+        <option value="edit">Full Edit Mode</option>
+        <option value="patch">Limited Patch Mode</option>
+    </select>
+    <form id="properties-form" class="grid grid-cols-2 gap-4"></form>
+</div>
+
+<script>
+let serverProperties = {};
+
+async function loadProperties() {
+    try {
+        const response = await axios.get(`/proxy/file/${serverId}/read/server.properties`);
+        const content = response.data.content;
+        serverProperties = Object.fromEntries(
+            content.split('\n')
+                .filter(line => line && !line.startsWith('#'))
+                .map(line => {
+                    const [key, value] = line.split('=').map(part => part.trim());
+                    return [key, isNaN(value) ? 
+                        value === 'true' ? true : 
+                        value === 'false' ? false : 
+                        value : Number(value)];
+                })
+        );
+        renderPropertiesForm();
+    } catch (error) {
+        console.error('Failed to fetch properties:', error);
+    }
+}
+
+function renderPropertiesForm() {
+    const form = document.getElementById('properties-form');
+    const editMode = document.getElementById('edit-mode').value;
+    form.innerHTML = '';
+
+    const fields = getFields(editMode);
+    fields.forEach(field => {
+        const div = document.createElement('div');
+        div.className = 'mb-4';
+        div.innerHTML = createFieldHTML(field);
+        form.appendChild(div);
+    });
+
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'col-span-2 mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600';
+    submitBtn.textContent = 'Save Properties';
+    submitBtn.onclick = submitProperties;
+    form.appendChild(submitBtn);
+}
+
+document.getElementById('edit-mode').onchange = renderPropertiesForm;
+
+function createFieldHTML(field) {
+    const label = field.name.split('-').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+
+    if (field.type === 'boolean') {
+        return `
+            <label class="flex items-center">
+                <input type="checkbox" name="${field.name}" 
+                    ${serverProperties[field.name] ? 'checked' : ''}
+                    class="mr-2">
+                ${label}
+            </label>
+        `;
+    }
+
+    if (field.type === 'select') {
+        const options = field.name === 'gamemode' ? 
+            ['survival', 'creative', 'adventure', 'spectator'] :
+            ['peaceful', 'easy', 'normal', 'hard'];
+        
+        return `
+            <label class="block mb-2">${label}</label>
+            <select name="${field.name}" class="w-full p-2 bg-opacity-30 bg-gray-900 border border-gray-600 rounded">
+                ${options.map(opt => `
+                    <option value="${opt}" ${serverProperties[field.name] === opt ? 'selected' : ''}>
+                        ${opt}
+                    </option>
+                `).join('')}
+            </select>
+        `;
+    }
+
+    return `
+        <label class="block mb-2">${label}</label>
+        <input type="${field.type}" name="${field.name}" 
+            value="${serverProperties[field.name] || ''}"
+            class="w-full p-2 bg-opacity-30 bg-gray-900 border border-gray-600 rounded">
+    `;
+}
+
+function getFields(editMode) {
+    return editMode === 'edit' ? [
+        { name: 'max-players', type: 'number' },
+        { name: 'view-distance', type: 'number' },
+        { name: 'gamemode', type: 'select' },
+        { name: 'difficulty', type: 'select' },
+        { name: 'spawn-monsters', type: 'boolean' },
+        { name: 'spawn-animals', type: 'boolean' },
+        { name: 'force-gamemode', type: 'boolean' },
+        { name: 'level-type', type: 'text' },
+        { name: 'spawn-npcs', type: 'boolean' },
+        { name: 'allow-nether', type: 'boolean' },
+        { name: 'pvp', type: 'boolean' },
+        { name: 'allow-flight', type: 'boolean' },
+        { name: 'spawn-protection', type: 'number' },
+        { name: 'announce-player-achievements', type: 'boolean' },
+        { name: 'enable-command-block', type: 'boolean' },
+        { name: 'require-resource-pack', type: 'boolean' },
+        { name: 'hardcore', type: 'boolean' },
+        { name: 'level-name', type: 'text' },
+        { name: 'max-tick-time', type: 'number' },
+        { name: 'resource-pack-prompt', type: 'text' },
+        { name: 'op-permission-level', type: 'number' },
+        { name: 'entity-broadcast-range-percentage', type: 'number' },
+        { name: 'white-list', type: 'boolean' },
+        { name: 'snooper-enabled', type: 'boolean' },
+        { name: 'enforce-whitelist', type: 'boolean' }
+    ] : [
+        { name: 'max-players', type: 'number' },
+        { name: 'pvp', type: 'boolean' },
+        { name: 'enable-command-block', type: 'boolean' },
+        { name: 'allow-nether', type: 'boolean' },
+        { name: 'white-list', type: 'boolean' },
+        { name: 'enforce-whitelist', type: 'boolean' },
+        { name: 'player-idle-timeout', type: 'number' },
+        { name: 'allow-flight', type: 'boolean' },
+        { name: 'spawn-protection', type: 'number' },
+        { name: 'view-distance', type: 'number' },
+        { name: 'simulation-distance', type: 'number' },
+        { name: 'entity-broadcast-range-percentage', type: 'number' },
+        { name: 'broadcast-console-to-ops', type: 'boolean' },
+        { name: 'op-permission-level', type: 'number' },
+        { name: 'function-permission-level', type: 'number' }
+    ];
+}
+
+async function submitProperties(e) {
+    e.preventDefault();
+    const form = document.getElementById('properties-form');
+    const editMode = document.getElementById('edit-mode').value;
+    const formData = new FormData(form);
+    const properties = {};
+
+    formData.forEach((value, key) => {
+        properties[key] = value === 'on' ? true : 
+                         value === 'off' ? false :
+                         !isNaN(value) ? Number(value) : value;
+    });
+
+    try {
+        await axios({
+            method: editMode === 'edit' ? 'POST' : 'PATCH',
+            url: `/proxy/server/${serverId}/${editMode === 'edit' ? 'edit' : 'patch'}_server_properties`,
+            data: { serverProperties: properties }
+        });
+        restartServer();
+        alert('Properties updated successfully');
+    } catch (error) {
+        alert('Failed to update properties');
+        console.error(error);
+    }
+}
+
+loadProperties();
+</script>

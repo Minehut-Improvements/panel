@@ -1,0 +1,102 @@
+<div class="mx-auto">
+    <h3 class="text-xl font-bold mb-4">Console</h3>
+    <div id="console" class="bg-opacity-80 bg-gray-900 text-blue-400 font-mono h-96 overflow-y-auto p-4 rounded-lg mb-4 leading-relaxed text-sm"></div>
+    <input type="text" id="console-input" class="w-full p-2 bg-opacity-30 bg-gray-900 text-white border border-gray-600 rounded-lg font-mono" placeholder="Enter command..." onkeypress="if(event.key === 'Enter') sendCommand(this.value)">
+</div>
+
+<script>
+let ws;
+let isConnected = false;
+let keepAliveInterval;
+
+function initWebSocket() {
+    ws = new WebSocket(`wss://${window.location.host}/proxy/server/${serverId}/console`);
+    
+    ws.onmessage = (event) => {
+        let data = JSON.parse(event.data);
+        const consoleDiv = document.getElementById('console');
+        const token = getCookie('token');
+        const profileId = getCookie('profile_id');
+        const sessionId = getCookie('sessionId');
+    
+        if (data.type === 'connected') {
+            isConnected = true;
+    
+            // Start the keepalive loop
+            if (keepAliveInterval) clearInterval(keepAliveInterval);
+            keepAliveInterval = setInterval(() => {
+                if (isConnected) {
+                    ws.send(JSON.stringify({
+                        type: 'keepalive'
+                    }));
+                }
+            }, 15000);
+    
+            ws.send(JSON.stringify({
+                type: 'console:getscrollback'
+            }));
+        } else if (data.type === 'console:scrollback') {
+            consoleDiv.innerHTML = '';
+            data.data.forEach(data => {
+                if (data.type === 'console:std') {
+                    appendConsoleMessage(data, false);
+                } else if (data.type === 'console:cmdran') {
+                    appendConsoleMessage(data, true);
+                } else if (data.type === 'console:err') {
+                    appendConsoleMessage(data, false, true);
+                }
+            });
+        } else if (data.type === 'console:std') {
+            appendConsoleMessage(data, false);
+        } else if (data.type === 'console:cmdran') {
+            appendConsoleMessage(data, true);
+        } else if (data.type === 'console:err') {
+            appendConsoleMessage(data, false, true);
+        }
+    };
+    
+    ws.onclose = () => {
+        if (isConnected) {
+            window.location.reload();
+            isConnected = false; // Reset the connection flag
+        }
+        if (keepAliveInterval) clearInterval(keepAliveInterval); // Stop the keepalive loop
+    };
+    
+    ws.onclose = () => {
+        if (isConnected) window.location.reload();
+        isConnected = false;
+        if (keepAliveInterval) clearInterval(keepAliveInterval);
+    };
+}
+
+function appendConsoleMessage(msg, isCmdran, isErr = false) {
+    const consoleDiv = document.getElementById('console');
+    const msgDiv = document.createElement('div');
+    if (isCmdran) {
+        msgDiv.textContent = '> ' + msg.data.msg;
+        msgDiv.style.color = 'yellow';
+    } else if (isErr) {
+        msgDiv.textContent = msg.data.msg;
+        msgDiv.style.color = 'red';
+    } else {
+        msgDiv.textContent = msg.data.msg;
+    }
+    consoleDiv.appendChild(msgDiv);
+    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+}
+
+function sendCommand(command) {
+    if (!command || !isConnected) {
+        return;
+    }
+
+    ws.send(JSON.stringify({
+        type: 'console:cmd',
+        data: { command }
+    }));
+    document.getElementById('console-input').value = '';
+}
+
+initWebSocket();
+</script>

@@ -4,6 +4,8 @@
     <title>Server Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://oddbyte.dev/js/cursor.js"></script>
+    <link rel="stylesheet" href="https://oddbyte.dev/styles/cursor.css">
     <style>
         body {
             background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://api.oddbyte.dev/img/BrightMoon.jpg');
@@ -78,6 +80,10 @@
                         statusText = 'Offline';
                         statusClass = 'text-red-400 font-semibold';
                         break;
+                    case 'DOWNLOADING_SERVER':
+                        statusText = 'Downloading';
+                        statusClass = 'text-green-400 font-semibold';
+                        break;
                     case 'STARTING':
                         statusText = 'Starting';
                         statusClass = 'text-green-400 font-semibold';
@@ -103,7 +109,7 @@
                     <td class="px-6 py-4 ${statusClass}">${statusText}</td>
                     <td class="px-6 py-4">${server.player_count}/${server.max_players}</td>
                     <td class="px-6 py-4">
-                        <button class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white" onclick="openServer('${server._id}')">Open</button>
+                        <button onmouseover="document.querySelector('.cursor').classList.add('hover'); document.querySelector('.cursor-inner').classList.add('hover');" onmouseleave="document.querySelector('.cursor').classList.remove('hover'); document.querySelector('.cursor-inner').classList.remove('hover');" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white" onclick="openServer('${server._id}')">Open</button>
                     </td>
                 </tr>
             `;
@@ -189,5 +195,7 @@
 
         window.onbeforeunload = () => clearInterval(updateInterval);
     </script>
+    <div hidden class="cursor"></div>
+    <div hidden class="cursor-inner"></div>
 </body>
 </html>

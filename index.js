@@ -26,9 +26,10 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 expressWs(app);
 
-// Serve the main page (simple frontend)
-app.get('/', async (req, res) => {
-    if (!req.cookies.minehut_id || !req.cookies.token || !req.cookies.sessionId || !req.cookies.profile_id) {
+// Helper function to check auth
+const checkAuth = (req, res, next) => {
+    if (!req.cookies.minehut_id || !req.cookies.token || 
+        !req.cookies.sessionId || !req.cookies.profile_id) {
         return res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -123,9 +124,12 @@ app.get('/', async (req, res) => {
         </div>
     </div>
 </body>
-</html>`
-);}
+</html>`);}
+    next();
+};
 
+// Serve the main page
+app.get('/', checkAuth, async (req, res) => {
     const minehutId = req.cookies.minehut_id;
     const token = req.cookies.token;
     const sessionId = req.cookies.sessionId;
@@ -212,9 +216,14 @@ app.get('/auth/session/:token', async (req, res) => {
 });
 
 app.ws('/proxy/server/:id/console', function (ws, req) {
+    const minehutId = req.cookies.minehut_id;
     const token = req.cookies.token;
     const profileId = req.cookies.profile_id;
     const sessionId = req.cookies.sessionId;
+
+    if (!minehutId || !token || !sessionId || !profileId) {
+        return res.status(400).send({ expired: true, message: "Session expired. Please login." });
+    }
 
     const clientWs = new WebSocket(`https://${req.params.id}.manager.dev.minehut.com/socket`, [
         token,
@@ -285,7 +294,7 @@ app.use('/proxy/*', async (req, res) => {
                 'x-profile-id': profileId,
                 'x-session-id': sessionId 
             },
-            data: req.body // Forward the request body if it's a POST request
+            data: req.body // Forward the request body
         });
 
         // Send back the data from the external API if the request is successful
@@ -317,7 +326,7 @@ app.use('/manager/:id*', async (req, res) => {
     const profileId = req.cookies.profile_id;
 
     if (!minehutId || !token || !sessionId || !profileId) {
-        return res.status(401).send('Session expired. Please log in.');
+        return res.status(400).send('Session expired. Please log in.');
     }
 
     try {
@@ -330,7 +339,7 @@ app.use('/manager/:id*', async (req, res) => {
                 'x-profile-id': profileId,
                 'x-session-id': sessionId 
             },
-            data: req.body // Forward the request body if it's a POST request
+            data: req.body // Forward the request body
         });
 
         // Send back the data from the external API if the request is successful
@@ -355,11 +364,37 @@ app.use('/manager/:id*', async (req, res) => {
     }
 });
 
-app.get('/server/:id', (req, res) => {
-    if (!req.cookies.minehut_id || !req.cookies.token || !req.cookies.sessionId || !req.cookies.profile_id) {
-        return res.send('Please log in first.');
-    }
-    res.render('server-panel');
+// Routes
+app.get('/server/:id', checkAuth, (req, res) => {
+    res.redirect(`/server/${req.params.id}/console`);
+});
+
+app.get('/server/:id/console', checkAuth, (req, res) => {
+    res.render('base', { 
+        page: 'console',
+        serverId: req.params.id
+    });
+});
+
+app.get('/server/:id/settings', checkAuth, (req, res) => {
+    res.render('base', { 
+        page: 'settings',
+        serverId: req.params.id
+    });
+});
+
+app.get('/server/:id/stats', checkAuth, (req, res) => {
+    res.render('base', { 
+        page: 'stats',
+        serverId: req.params.id
+    });
+});
+
+app.get('/server/:id/files', checkAuth, (req, res) => {
+    res.render('base', { 
+        page: 'file',
+        serverId: req.params.id
+    });
 });
 
 // Start the server
