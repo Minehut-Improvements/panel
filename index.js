@@ -2,15 +2,23 @@ const express = require('express');
 const axios = require('axios');
 const cookieParser = require('cookie-parser');
 const path = require('path');
-const { createProxyMiddleware } = require('http-proxy-middleware');
 const expressWs = require('express-ws');
 const WebSocket = require('ws');
+const cors = require('cors');
 
 const app = express();
 const port = 5050;
 
 
-// Middleware
+// Middleware & CORS
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      callback(null, origin); // Reflect the incoming origin
+    },
+    credentials: true, // Allow cookies and credentials from other origins (so you can make your own panel frontend)
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -98,33 +106,22 @@ app.get('/', async (req, res) => {
             <div class="instructions">
                 <h3>Step 1: Install the Extension</h3>
                 <p>
-                    Download and install the extension from 
+                    Download and install the extension from the 
                     <a href="https://github.com/Minehut-Improvements/panel/tree/extension" target="_blank">
                         GitHub Repository
                     </a>.
                 </p>
                 <h3>Step 2: Log In</h3>
                 <p>
-                    Log in at 
+                    Log in from 
                     <a href="https://gqgn0edrg67vnqh.minehut.app/" target="_blank">
-                        Minehut Login Page
+                        Minehut's login page
                     </a>.
                 </p>
             </div>
-            <button onclick="checkCompletion()">Continue</button>
+            <button onclick="window.location.reload()">Continue</button>
         </div>
     </div>
-
-    <script>
-        function checkCompletion() {
-            const extensionInstalled = confirm("Have you installed the extension?");
-            if (extensionInstalled) {
-                window.location.href = "https://gqgn0edrg67vnqh.minehut.app/";
-            } else {
-                alert("Please install the extension before proceeding.");
-            }
-        }
-    </script>
 </body>
 </html>`
 );}
