@@ -17,4 +17,4 @@ This is extension that redirects minehut's login request to our panel. It does n
 ![image](https://github.com/user-attachments/assets/4194a150-9ea3-4218-b8c6-fd7acf367a36)
 
 5. Congratulations, you have installed it. Please continue to log in to the panel.
-You can view and edit the source code of the extension in the extension's folder. The extension is extremely simple, so there shouldnt really be any need to edit it. However, if you do, just make your edits directly to the folder and click the little refresh button on the extension's card.
+You can view and edit the source code of the extension in the extension's folder. The extension is extremely simple, so there shouldnt really be any need to edit it. However, if you do, just make your edits directly to the zip file and click the reload button on the extension's card.
