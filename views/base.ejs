@@ -10,9 +10,9 @@
     <link rel="stylesheet" href="https://oddbyte.dev/styles/cursor.css">
 </head>
 <body class="h-full flex flex-col text-white">
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 py-8 max-w-[90%]">
         <!-- Navigation Card -->
-        <div class="bg-black bg-opacity-70 rounded-lg shadow-lg p-2 mb-8">
+        <div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-2 mb-8">
             <div class="flex space-x-8 justify-center">
                 <a href="/server/<%= serverId %>/console" class="<%= page === 'console' ? 'text-blue-400 border-blue-400' : 'text-gray-300 border-transparent hover:text-white hover:border-gray-400' %> py-4 px-6 border-b-2 font-medium transition-colors duration-200">
                     Console
@@ -30,7 +30,7 @@
         </div>
 
         <!-- Server Info Card -->
-        <div class="bg-black bg-opacity-70 rounded-lg shadow-lg p-6 mb-8">
+        <div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8">
             <h1 class="text-3xl font-bold mb-6" id="server-name"></h1>
             
             <div class="space-y-4">
@@ -56,14 +56,16 @@
                 </div>
 
                 <!-- Control Buttons -->
-                <div class="flex items-center justify-center gap-4">
-                    <button onclick="startServer()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Start</button>
-                    <button onclick="stopServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Stop</button>
-                    <button onclick="restartServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Restart</button>
-                    <button onclick="hibernateServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Hibernate</button>
-                    <button onclick="bootServer()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Un-Hibernate</button>
-                    <button onclick="updateServer()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Update Server</button>
-                    <button onclick="upgradeServer()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">Max Upgrades</button>
+                <div class="bg-gray-800 bg-opacity-50 rounded-lg p-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <button onclick="startServer()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Start</button>
+                        <button onclick="stopServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Stop</button>
+                        <button onclick="restartServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Restart</button>
+                        <button onclick="hibernateServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Hibernate</button>
+                        <button onclick="bootServer()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Un-Hibernate</button>
+                        <button onclick="updateServer()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Update Server</button>
+                        <button onclick="upgradeServer()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Max Upgrades</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -238,7 +240,8 @@
                 clearInterval(updateInterval);
             }
         </script>
-        <div id="dynamic_content"><%- include(page) %></div>
+
+        <div id="dynamic_content" class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8"><%- include(page) %></div>
     </div>
     <div hidden class="cursor"></div>
     <div hidden class="cursor-inner"></div>
