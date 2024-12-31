@@ -1,13 +1,16 @@
-<div id="server-properties" class="mt-4 p-4 rounded">
-    <h3 class="text-xl font-bold mb-4">Server Properties</h3>
-    <button onclick="resetProps()" class="mb-4 bg-green-600 hover:bg-green-700">Reset server.properties</button>
-    
-    <select id="edit-mode" class="w-full p-2 mb-4 bg-opacity-30 bg-gray-900 border border-gray-600 rounded">
-        <option value="edit">Full Edit Mode</option>
-        <option value="patch">Limited Patch Mode</option>
-    </select>
-    <form id="properties-form" class="grid grid-cols-2 gap-4"></form>
+<div class="flex justify-between items-center mb-6">
+    <h3 class="text-2xl font-bold">Server Properties</h3>
+    <button onclick="resetProps()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105">
+        Reset server.properties
+    </button>
 </div>
+
+<select id="edit-mode" class="w-full p-3 mb-6 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg text-white">
+    <option value="edit">Full Edit Mode</option>
+    <option value="patch">Limited Patch Mode</option>
+</select>
+
+<form id="properties-form" class="grid grid-cols-1 md:grid-cols-2 gap-6"></form>
 
 <script>
 let serverProperties = {};
@@ -45,9 +48,9 @@ function renderPropertiesForm() {
         div.innerHTML = createFieldHTML(field);
         form.appendChild(div);
     });
-
+    
     const submitBtn = document.createElement('button');
-    submitBtn.className = 'col-span-2 mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600';
+    submitBtn.className = 'col-span-1 md:col-span-2 mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105';
     submitBtn.textContent = 'Save Properties';
     submitBtn.onclick = submitProperties;
     form.appendChild(submitBtn);
@@ -59,40 +62,49 @@ function createFieldHTML(field) {
     const label = field.name.split('-').map(word => 
         word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
-
+    const baseInputClass = "w-full p-3 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white";
+    
     if (field.type === 'boolean') {
         return `
-            <label class="flex items-center">
-                <input type="checkbox" name="${field.name}" 
-                    ${serverProperties[field.name] ? 'checked' : ''}
-                    class="mr-2">
-                ${label}
+            <label class="relative flex items-center justify-between p-4 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg group hover:border-blue-500 transition-colors duration-200">
+                <span class="text-white">${label}</span>
+                <div class="relative">
+                    <input type="checkbox" name="${field.name}" 
+                        ${serverProperties[field.name] ? 'checked' : ''}
+                        class="peer sr-only">
+                    <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-500"></div>
+                    <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 peer-checked:translate-x-5"></div>
+                </div>
             </label>
         `;
     }
-
+    
     if (field.type === 'select') {
         const options = field.name === 'gamemode' ? 
             ['survival', 'creative', 'adventure', 'spectator'] :
             ['peaceful', 'easy', 'normal', 'hard'];
         
         return `
-            <label class="block mb-2">${label}</label>
-            <select name="${field.name}" class="w-full p-2 bg-opacity-30 bg-gray-900 border border-gray-600 rounded">
-                ${options.map(opt => `
-                    <option value="${opt}" ${serverProperties[field.name] === opt ? 'selected' : ''}>
-                        ${opt}
-                    </option>
-                `).join('')}
-            </select>
+            <div class="space-y-2">
+                <label class="block font-medium text-white">${label}</label>
+                <select name="${field.name}" class="${baseInputClass}">
+                    ${options.map(opt => `
+                        <option value="${opt}" ${serverProperties[field.name] === opt ? 'selected' : ''}>
+                            ${opt.charAt(0).toUpperCase() + opt.slice(1)}
+                        </option>
+                    `).join('')}
+                </select>
+            </div>
         `;
     }
-
+    
     return `
-        <label class="block mb-2">${label}</label>
-        <input type="${field.type}" name="${field.name}" 
-            value="${serverProperties[field.name] || ''}"
-            class="w-full p-2 bg-opacity-30 bg-gray-900 border border-gray-600 rounded">
+        <div class="space-y-2">
+            <label class="block font-medium text-white">${label}</label>
+            <input type="${field.type}" name="${field.name}" 
+                value="${serverProperties[field.name] || ''}"
+                class="${baseInputClass}">
+        </div>
     `;
 }
 
