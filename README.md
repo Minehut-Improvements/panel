@@ -2,6 +2,8 @@
 
 This is extension that redirects minehut's login request to our panel. It does not redirect your credentials, just the session token.
 
+### IF YOU ARE ON FIREFOX, USE OUR [FIREFOX PORT](https://github.com/Minehut-Improvements/panel/tree/extension-firefox)!
+
 ### Installing the extension:
 1. Download the [extension](https://github.com/Minehut-Improvements/panel/raw/refs/heads/extension/Minehut_Improved_Login.zip) zip file.
 2. Extract it to its own folder
