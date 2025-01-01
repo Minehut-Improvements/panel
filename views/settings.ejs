@@ -10,9 +10,113 @@
     <option value="patch">Limited Patch Mode</option>
 </select>
 
+<div class="card">
+    <h3>Custom Ports</h3>
+    <div id="port-management-root"></div>
+</div>
+
 <form id="properties-form" class="grid grid-cols-1 md:grid-cols-2 gap-6"></form>
 
 <script>
+
+function toggleNewPortMenu() {
+    const menu = document.getElementById('new-port-menu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+function addPort() {
+    const portInput = document.getElementById('new-port-input');
+    const portValue = parseInt(portInput.value, 10);
+    const portList = document.getElementById('port-list');
+    if (portList.children.length >= MAX_PORTS) {
+        alert('Maximum of ' + MAX_PORTS + ' ports reached.');
+        return;
+    }
+    if (portValue && portValue >= 1024 && portValue <= 65535) {
+        const newPortItem = document.createElement('div');
+        newPortItem.className = 'port-item';
+        newPortItem.innerHTML = `Port ${portValue} <button onclick="deletePort(${portValue})">Delete</button>`;
+        portList.appendChild(newPortItem);
+        portInput.value = '';
+        toggleNewPortMenu();
+    } else {
+        alert('Please enter a valid port number (1024-65535).');
+    }
+}
+async function fetchPorts() {
+    try {
+        const response = await axios.get(`/proxy/v1/server/${serverId}/port`);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch ports:', error);
+        return [];
+    }
+}
+async function createPort() {
+    try {
+        const portInput = document.getElementById('new-port-input');
+        const in_port = parseInt(portInput.value, 10);
+        let type = 'TCP';
+        const response = await axios.post(`/proxy/v1/server/${serverId}/port`, { serverId, type, in_port });
+        alert('Port created successfully: ' + response.data.port);
+        window.location.reload();
+    } catch (error) {
+        alert('Failed to create port');
+        console.error(error);
+    }
+}
+async function deletePort(portId) {
+    try {
+        await axios.delete(`/proxy/v1/server/${serverId}/port/${portId}`);
+        alert('Port deleted successfully');
+        window.location.reload();
+    } catch (error) {
+        alert('Failed to delete port');
+        console.error(error);
+    }
+}
+async function loadPorts() {
+    const ports = await fetchPorts();
+    const root = document.getElementById('port-management-root');
+    root.innerHTML = '';
+    let numports = 0;
+
+    if (ports && ports.length > 0) {
+        ports.forEach(port => {
+            numports += 1;
+            const portDiv = document.createElement('div');
+            portDiv.className = 'port';
+            portDiv.textContent = `Internal Port: ${port.in_port}, External Port: ${port.ex_port}, IP: ${port.ip.ip}`;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.onclick = () => deletePort(port.id);
+
+            portDiv.appendChild(deleteButton);
+            root.appendChild(portDiv);
+        });
+    }
+
+    if (numports < 2) {
+        const newportInput = document.createElement('input');
+        newportInput.type = 'number';
+        newportInput.id = 'new-port-input';
+        newportInput.placeholder = 'Enter port number';
+        newportInput.min = 1024;
+        newportInput.max = 65535;
+
+        const addPortButton = document.createElement('button');
+        addPortButton.textContent = 'Add Port';
+        addPortButton.onclick = () => {
+            const portValue = parseInt(newportInput.value, 10);
+            if (!isNaN(portValue)) createPort(portValue);
+        };
+
+        root.appendChild(newportInput);
+        root.appendChild(addPortButton);
+    }
+}
+loadPorts();
+
 let serverProperties = {};
 
 async function loadProperties() {

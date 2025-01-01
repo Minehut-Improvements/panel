@@ -77,9 +77,9 @@
                 document.getElementById('memory-percent').textContent = memoryPercent + '%';
                 document.getElementById('memory-number').textContent = '(' + formatBytes(data.memory.usage, 'MiB') + ")";
                 document.getElementById('memory-details').innerHTML = `
-                    Usage: ${data.memory.usage}<br>
-                    Request: ${data.memory.request}<br>
-                    Limit: ${data.memory.limit}
+                    Usage: ${data.memory.usage} MB<br>
+                    Request: ${data.memory.request} MB<br>
+                    Limit: ${data.memory.limit} MB
                 `;
 
                 // Disk
