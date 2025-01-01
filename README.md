@@ -2,6 +2,10 @@
 
 This is extension that redirects minehut's login request to our panel. It does not redirect your credentials, just the session token.
 
+### Disclaimer:
+
+The addon will be disabled when you restart your firefox. So you had to install it again.
+
 ### Installing the extension:
 1. Download the [extension](https://github.com/Minehut-Improvements/panel/raw/refs/heads/extension-firefox/Minehut_Improved-Firefox-Port.zip) zip file.
 2. Go to ``about:debugging#/runtime/this-firefox`` and click on ``Load Temporary Add-on``
