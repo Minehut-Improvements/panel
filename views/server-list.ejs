@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="h-full bg-cover bg-fixed" style="background-image: url('https://api.oddbyte.dev/img/BrightMoon.jpg');">
+<html class="min-h-screen bg-cover bg-fixed" style="background-image: url('https://api.oddbyte.dev/img/BrightMoon.jpg');">
 <head>
     <title>Server Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
@@ -7,53 +7,49 @@
     <script src="https://oddbyte.dev/js/cursor.js"></script>
     <link rel="stylesheet" href="https://oddbyte.dev/styles/cursor.css">
     <style>
-        .fade {
-            transition: all 0.3s ease;
-        }
-        .highlight {
-            background: rgba(56, 189, 248, 0.1);
-        }
+        .fade { transition: all 0.3s ease; }
+        .highlight { background: rgba(56, 189, 248, 0.1); }
     </style>
 </head>
-<body class="h-full flex flex-col items-center justify-center p-8 text-white">
-    <div class="w-full max-w-4xl space-y-8">
-        <div class="flex flex-col text-center items-center justify-center space-y-4 rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)]">
-            <br />
+<body class="min-h-screen overflow-auto text-white">
+    <main class="container mx-auto px-4 py-8 space-y-6">
+        <header class="bg-gray-900/90 rounded-xl border border-gray-700 p-6 text-center space-y-4">
             <h1 class="text-4xl font-bold">Server Dashboard</h1>
             <p class="text-gray-300">Welcome to the Server Dashboard. Control and monitor your servers here.</p>
-            <div class="flex space-x-8">
-                <button onclick="showCreateServerPopup()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white">
+            <div class="flex flex-wrap justify-center gap-4">
+                <button onclick="showCreateServerPopup()" class="inline-flex items-center px-6 py-3 rounded-lg font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all">
                     <span>Create Server</span>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                 </button>
-                <button onclick="updateServerList()" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white">
+                <button onclick="updateServerList()" class="px-6 py-3 rounded-lg font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all">
                     Refresh
                 </button>
             </div>
-            <br />
-        </div>
+        </header>
 
-        <div id="errorMessage" class="hidden p-8 rounded-xl text-center space-y-4 bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)]">
+        <div id="errorMessage" class="hidden bg-gray-900/90 rounded-xl border border-red-500 p-6 text-center space-y-4">
             <h2 class="text-2xl font-bold">Oops, there's an error</h2>
             <p>There was an error: <span class="text-red-400" id="errorText"></span></p>
         </div>
 
-        <div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)]">
-            <table class="w-full text-left">
-                <thead class="bg-gray-800 bg-opacity-50">
-                    <tr>
-                        <th class="px-6 py-4 font-medium text-gray-300">Name</th>
-                        <th class="px-6 py-4 font-medium text-gray-300">Status</th>
-                        <th class="px-6 py-4 font-medium text-gray-300">Players</th>
-                        <th class="px-6 py-4 font-medium text-gray-300">Open</th>
-                    </tr>
-                </thead>
-                <tbody id="serverList"></tbody>
-            </table>
+        <div class="bg-gray-900/90 rounded-xl border border-gray-700 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-800">
+                            <th class="px-6 py-4 font-semibold text-left">Name</th>
+                            <th class="px-6 py-4 font-semibold text-left">Status</th>
+                            <th class="px-6 py-4 font-semibold text-left">Players</th>
+                            <th class="px-6 py-4 font-semibold text-left">Open</th>
+                        </tr>
+                    </thead>
+                    <tbody id="serverList"></tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    </main>
 
     <script>
         let lastData = {};
