@@ -228,11 +228,15 @@ async function updateServerInfo() {
     try {
         const response = await axios.get('/getData');
         const server = response.data.find(s => s._id === serverId);
-        if (!server) throw new Error('Server not found');
+        if (!server) {
+            errorAlert('Failed to find server!');
+            return;
+        };
         
         serverData = { ...server };
         updateDOM();
     } catch (error) {
+        errorAlert(`Failed to fetch server data: ${error}`)
         console.error('Failed to fetch server data:', error);
     }
 }
@@ -243,7 +247,7 @@ async function startServer() {
         await axios.post(`/proxy/server/${serverId}/start`);
         await updateServerInfo();
     } catch (error) {
-        alert('Failed to start server');
+        errorAlert(`Failed to start server: ${error}`);
     }
 }
 
@@ -252,7 +256,7 @@ async function bootServer() {
         await axios.post(`/proxy/server/${serverId}/start_service`);
         await updateServerInfo();
     } catch (error) {
-        alert('Failed to boot server');
+        errorAlert(`Failed to boot server: ${error}`);
     }
 }
 
@@ -261,7 +265,7 @@ async function stopServer() {
         await axios.post(`/proxy/server/${serverId}/shutdown`);
         await updateServerInfo();
     } catch (error) {
-        alert('Failed to stop server');
+        errorAlert(`Failed to stop server: ${error}`);
     }
 }
 
@@ -270,7 +274,7 @@ async function restartServer() {
         await axios.post(`/proxy/server/${serverId}/restart`);
         await updateServerInfo();
     } catch (error) {
-        alert('Failed to restart server');
+        errorAlert(`Failed to restart server: ${error}`);
     }
 }
 
@@ -279,7 +283,7 @@ async function hibernateServer() {
         await axios.post(`/proxy/server/${serverId}/destroy_service`);
         await updateServerInfo();
     } catch (error) {
-        alert('Failed to hibernate server');
+        errorAlert(`Failed to hibernate server: ${error}`);
     }
 }
 
@@ -296,7 +300,7 @@ async function updateServer() {
         });
         resetProps();
     } catch (error) {
-        alert('Failed to update server');
+        errorAlert(`Failed to set server version: ${error}`);
         console.error('Error:', error);
     }
 }
@@ -316,7 +320,7 @@ async function upgradeServer() {
         await axios.post(`/proxy/v1/server/${serverId}/custom_plan`, payload);
         await updateServerInfo();
     } catch (error) {
-        alert('Failed to upgrade server');
+        errorAlert(`Failed to upgrade server: ${error}`);
         console.error(error);
     }
 }
@@ -340,7 +344,7 @@ async function resetProps() {
         await restartServer();
         alert('Successfully reset server.properties!');
     } catch (error) {
-        alert('Failed to reset properties');
+        errorAlert(`Failed to reset properties: ${error}`);
         console.error(error);
     }
 }
