@@ -70,11 +70,37 @@
             </div>
         </div>
 
+        <!-- Alert system -->
+        <div id="alert-container" class="fixed inset-0 flex items-center justify-center hidden z-50">
+            <div class="fixed inset-0 bg-blue-500 bg-opacity-15 backdrop-blur-sm"> <!-- Alert background --> </div>
+
+            <!-- The alert box -->
+            <div class="bg-white rounded-xl p-8 max-w-md mx-4 relative z-10 transform transition-all duration-200 ease-out scale-95 opacity-0" id="alert-box">
+                <div class="flex items-start mb-6">
+                    <div id="alert-icon" class="mr-4 flex-shrink-0"> <!-- Icon --> </div>
+
+                    <div class="flex-1">
+                        <h3 id="alert-title" class="text-lg font-semibold mb-2"> <!-- Title --></h3>
+                        <p id="alert-content" class="text-gray-600"> <!-- Content --> </p>
+                    </div>
+                </div>
+
+                <!-- Button to close alerts -->
+                <div class="flex justify-end">
+                    <button onclick="closeAlert()" class="px-6 py-2.5 rounded-lg font-medium transition-all duration-200 hover:scale-105" id="alert-button">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <script>
+// Variables
 let serverData = {};
 const serverId = window.location.pathname.split('/')[2];
 let updateInterval;
 
+// Helper functions
 function formatBytes(value, unit = 'B') {
     const KiB = 1024;
     const MiB = KiB * 1024;
@@ -104,6 +130,57 @@ function getCookie(name) {
     if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
+// Alert system
+const ALERT_TYPES = {
+  info: {
+    icon: `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+    title: 'Information',
+    buttonClass: 'bg-blue-500 text-white hover:bg-blue-600'
+  },
+  warning: {
+    icon: `<svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`,
+    title: 'Warning',
+    buttonClass: 'bg-yellow-500 text-white hover:bg-yellow-600'
+  },
+  error: {
+    icon: `<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+    title: 'Error',
+    buttonClass: 'bg-red-500 text-white hover:bg-red-600'
+  }
+};
+
+function showAlert(message, type = 'info') {
+  const alertType = ALERT_TYPES[type] || ALERT_TYPES.info;
+  const container = document.getElementById('alert-container');
+  const box = document.getElementById('alert-box');
+  const icon = document.getElementById('alert-icon');
+  const title = document.getElementById('alert-title');
+  const content = document.getElementById('alert-content');
+  const button = document.getElementById('alert-button');
+  icon.innerHTML = alertType.icon;
+  title.textContent = alertType.title;
+  content.textContent = message;
+  button.className = `px-6 py-2.5 rounded-lg font-medium transition-all duration-200 hover:scale-105 ${alertType.buttonClass}`;
+  container.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    box.classList.remove('scale-95', 'opacity-0');
+    box.classList.add('scale-100', 'opacity-100');
+  });
+}
+
+function closeAlert() {
+  const container = document.getElementById('alert-container');
+  const box = document.getElementById('alert-box');
+  
+  box.classList.remove('scale-100', 'opacity-100');
+  box.classList.add('scale-95', 'opacity-0');
+  
+  setTimeout(() => {
+    container.classList.add('hidden');
+  }, 200);
+}
+
+// Info card
 function updateDOM() {
     const server = serverData;
     if (!server) return;
@@ -160,6 +237,7 @@ async function updateServerInfo() {
     }
 }
 
+// Server management functions
 async function startServer() {
     try {
         await axios.post(`/proxy/server/${serverId}/start`);
@@ -267,11 +345,12 @@ async function resetProps() {
     }
 }
 
+// Start updating server info
 updateServerInfo();
-updateInterval = setInterval(updateServerInfo, 3000);
+updateInterval_Serverinfo = setInterval(updateServerInfo, 3000);
 
 window.onbeforeunload = () => {
-    clearInterval(updateInterval);
+    clearInterval(updateInterval_Serverinfo);
 };
 
 // Export functions for global access
@@ -285,6 +364,11 @@ window.upgradeServer = upgradeServer;
 window.resetProps = resetProps;
 window.formatBytes = formatBytes;
 window.getCookie = getCookie;
+
+// Replace alert with our alert system
+window.alert = showAlert;
+window.errorAlert = (message) => showAlert(message, 'error');
+window.warningAlert = (message) => showAlert(message, 'warning');
 
 // Export variables for global access
 window.serverData = serverData;

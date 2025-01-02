@@ -37,19 +37,24 @@
 </div>
 
 <script>
+// Variables
+const MAX_PORTS = 2; // Seems to be the maximum amount of ports any server can have
+
 function toggleNewPortMenu() {
     const menu = document.getElementById('new-port-menu');
     menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
 }
 
 function addPort() {
-    const portInput = document.getElementById('new-port-input');
-    const portValue = parseInt(portInput.value, 10);
     const portList = document.getElementById('port-list');
     if (portList.children.length >= MAX_PORTS) {
-        alert('Maximum of ' + MAX_PORTS + ' ports reached.');
+        warningAlert('Maximum of ' + MAX_PORTS + ' ports reached.');
         return;
     }
+
+    const portInput = document.getElementById('new-port-input');
+    const portValue = parseInt(portInput.value, 10);
+
     if (portValue && portValue >= 1024 && portValue <= 65535) {
         const newPortItem = document.createElement('div');
         newPortItem.className = 'port-item';
@@ -58,7 +63,7 @@ function addPort() {
         portInput.value = '';
         toggleNewPortMenu();
     } else {
-        alert('Please enter a valid port number (1024-65535).');
+        warningAlert('Please enter a valid port number (1024-65535).');
     }
 }
 
@@ -81,8 +86,8 @@ async function createPort() {
         alert('Port created successfully: ' + response.data.port);
         window.location.reload();
     } catch (error) {
-        alert('Failed to create port');
-        console.error(error);
+        errorAlert(`Failed to create port: ${error}`);
+        console.error(`Failed to create port: ${error}`);
     }
 }
 
@@ -92,7 +97,7 @@ async function deletePort(portId) {
         alert('Port deleted successfully');
         window.location.reload();
     } catch (error) {
-        alert('Failed to delete port');
+        errorAlert(`Failed to delete port: ${error}`);
         console.error(error);
     }
 }
@@ -120,7 +125,7 @@ async function loadPorts() {
         });
     }
 
-    if (numports < 2) {
+    if (numports < MAX_PORTS) {
         const newportInput = document.createElement('input');
         newportInput.type = 'number';
         newportInput.id = 'new-port-input';
@@ -308,7 +313,7 @@ async function submitProperties(e) {
         restartServer();
         alert('Properties updated successfully');
     } catch (error) {
-        alert('Failed to update properties');
+        errorAlert('Failed to update properties');
         console.error(error);
     }
 }

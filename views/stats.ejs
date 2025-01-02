@@ -63,7 +63,7 @@ function updateMetrics() {
                 ${data.disk.limit ? `Limit: ${data.disk.limit} KB` : 'No limit set'}
             `;
         })
-        .catch(error => console.error('Error fetching metrics:', error));
+        .catch(error => errorAlert(`Error fetching metrics: ${error}`));
 }
 
 advancedMode.addEventListener('change', () => {
