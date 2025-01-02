@@ -7,6 +7,11 @@ Frontend is in the `views/` folder.
 
 The API middleware is in the `index.js` file. This middleware handles authentication, proxying API requests, and the websocket connection for the console.
 
+### This project does not use *any* minehut code. Everything is coded from the ground up.
+
+## This project will *never* handle any payment processing. If you want to buy credits, you must use the official minehut panel to do so.
+We will allow you to use credits that you already have (buying ranks, server plans, etc.)
+
 # Images:
 
 ### Server list:
