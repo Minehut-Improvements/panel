@@ -51,3 +51,6 @@ The API middleware is in the `index.js` file. This middleware handles authentica
 - Add advertising support.
 - Add toggling cosmetics.
 - Changing FMCS link.
+
+# What will *not* be added:
+I refuse to mess with the payment system, period. You will not be able to buy credits using this panel. Please use the official panel for purchases.
