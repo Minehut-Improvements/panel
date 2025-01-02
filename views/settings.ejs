@@ -10,19 +10,38 @@
     <option value="patch">Limited Patch Mode</option>
 </select>
 
-<div class="card">
-    <h3>Custom Ports</h3>
-    <div id="port-management-root"></div>
-</div>
-
 <form id="properties-form" class="grid grid-cols-1 md:grid-cols-2 gap-6"></form>
 
-<script>
+<hr class="rounded-xl border-none h-0.5 bg-neutral-700 my-5">
 
+<h3 class="text-xl font-semibold text-white mb-4">Custom Ports</h3>
+<div id="port-management-root" class="space-y-4">
+    <!-- Port items will be styled with these classes -->
+    <div class="port flex items-center justify-between bg-gray-800 p-4 rounded-lg border border-gray-600">
+        <span class="text-gray-200">Port details here</span>
+        <button onclick="deletePort(port.id)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md transition-colors duration-200">
+            Delete
+        </button>
+    </div>
+
+    <!-- Input and add button container -->
+    <div class="flex gap-3">
+        <input type="number" id="new-port-input" 
+            class="flex-1 bg-gray-800 text-white rounded-lg border border-gray-600 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Enter port number (1024-65535)">
+        <button onclick="createPort()" 
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+            Add Port
+        </button>
+    </div>
+</div>
+
+<script>
 function toggleNewPortMenu() {
     const menu = document.getElementById('new-port-menu');
     menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
 }
+
 function addPort() {
     const portInput = document.getElementById('new-port-input');
     const portValue = parseInt(portInput.value, 10);
@@ -42,21 +61,23 @@ function addPort() {
         alert('Please enter a valid port number (1024-65535).');
     }
 }
+
 async function fetchPorts() {
     try {
-        const response = await axios.get(`/proxy/v1/server/${serverId}/port`);
+        const response = await axios.get(`/proxy/v1/server/${window.serverId}/port`);
         return response.data;
     } catch (error) {
         console.error('Failed to fetch ports:', error);
         return [];
     }
 }
+
 async function createPort() {
     try {
         const portInput = document.getElementById('new-port-input');
         const in_port = parseInt(portInput.value, 10);
         let type = 'TCP';
-        const response = await axios.post(`/proxy/v1/server/${serverId}/port`, { serverId, type, in_port });
+        const response = await axios.post(`/proxy/v1/server/${window.serverId}/port`, { serverId: window.serverId, type, in_port });
         alert('Port created successfully: ' + response.data.port);
         window.location.reload();
     } catch (error) {
@@ -64,9 +85,10 @@ async function createPort() {
         console.error(error);
     }
 }
+
 async function deletePort(portId) {
     try {
-        await axios.delete(`/proxy/v1/server/${serverId}/port/${portId}`);
+        await axios.delete(`/proxy/v1/server/${window.serverId}/port/${portId}`);
         alert('Port deleted successfully');
         window.location.reload();
     } catch (error) {
@@ -74,6 +96,7 @@ async function deletePort(portId) {
         console.error(error);
     }
 }
+
 async function loadPorts() {
     const ports = await fetchPorts();
     const root = document.getElementById('port-management-root');
@@ -84,10 +107,11 @@ async function loadPorts() {
         ports.forEach(port => {
             numports += 1;
             const portDiv = document.createElement('div');
-            portDiv.className = 'port';
+            portDiv.className = 'port flex items-center justify-between bg-gray-800 p-4 rounded-lg border border-gray-600';
             portDiv.textContent = `Internal Port: ${port.in_port}, External Port: ${port.ex_port}, IP: ${port.ip.ip}`;
 
             const deleteButton = document.createElement('button');
+            deleteButton.className = 'bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md transition-colors duration-200';
             deleteButton.textContent = 'Delete';
             deleteButton.onclick = () => deletePort(port.id);
 
@@ -103,9 +127,11 @@ async function loadPorts() {
         newportInput.placeholder = 'Enter port number';
         newportInput.min = 1024;
         newportInput.max = 65535;
+        newportInput.className = 'flex-1 bg-gray-800 text-white rounded-lg border border-gray-600 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent';
 
         const addPortButton = document.createElement('button');
         addPortButton.textContent = 'Add Port';
+        addPortButton.className = 'bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors duration-200';
         addPortButton.onclick = () => {
             const portValue = parseInt(newportInput.value, 10);
             if (!isNaN(portValue)) createPort(portValue);
@@ -115,13 +141,14 @@ async function loadPorts() {
         root.appendChild(addPortButton);
     }
 }
+
 loadPorts();
 
 let serverProperties = {};
 
 async function loadProperties() {
     try {
-        const response = await axios.get(`/proxy/file/${serverId}/read/server.properties`);
+        const response = await axios.get(`/proxy/file/${window.serverId}/read/server.properties`);
         const content = response.data.content;
         serverProperties = Object.fromEntries(
             content.split('\n')
@@ -160,6 +187,7 @@ function renderPropertiesForm() {
     form.appendChild(submitBtn);
 }
 
+// Re-render the form when switching between PATCH and POST modes
 document.getElementById('edit-mode').onchange = renderPropertiesForm;
 
 function createFieldHTML(field) {
@@ -274,7 +302,7 @@ async function submitProperties(e) {
     try {
         await axios({
             method: editMode === 'edit' ? 'POST' : 'PATCH',
-            url: `/proxy/server/${serverId}/${editMode === 'edit' ? 'edit' : 'patch'}_server_properties`,
+            url: `/proxy/server/${window.serverId}/${editMode === 'edit' ? 'edit' : 'patch'}_server_properties`,
             data: { serverProperties: properties }
         });
         restartServer();

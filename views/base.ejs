@@ -71,174 +71,218 @@
         </div>
 
         <script>
-            const serverId = window.location.pathname.split('/')[2];
-            let lastData = null;
-            let updateInterval;
+let serverData = {};
+const serverId = window.location.pathname.split('/')[2];
+let updateInterval;
+
+function formatBytes(value, unit = 'B') {
+    const KiB = 1024;
+    const MiB = KiB * 1024;
+    const GiB = MiB * 1024;
+    const TiB = GiB * 1024;
+    const PiB = TiB * 1024;
     
-            async function startServer() {
-                try {
-                    await axios.post(`/proxy/server/${serverId}/start`);
-                    await updateServerInfo();
-                } catch (error) {
-                    alert('Failed to start server');
-                }
-            }
+    let bytes = value;
+    switch (unit.toUpperCase()) {
+        case 'KIB': bytes = value * KiB; break;
+        case 'MIB': bytes = value * MiB; break;
+        case 'GIB': bytes = value * GiB; break;
+        case 'TIB': bytes = value * TiB; break;
+        case 'PIB': bytes = value * PiB; break;
+    }
     
-            async function resetProps() {
-                fetch(`/proxy/file/${serverId}/delete`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: '{"files":["/server.properties"]}',
-                    credentials: 'include'
-                }).then(fetch(`/proxy/server/${serverId}/edit_server_properties`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: '{"serverProperties":{"max-players":10,"view-distance":6,"gamemode":"survival","difficulty":"easy","spawn-mobs":true,"spawn-animals":true,"force-gamemode":false,"level-type":"default","spawn-npcs":true,"allow-nether":true,"pvp":true,"allow-flight":false,"spawn-protection":16,"announce-player-achievements":true,"enable-command-block":false,"require-resource-pack":false,"hardcore":false,"level-name":"world","max-tick-time":60000,"resource-pack-prompt":"","op-permission-level":4,"entity-broadcast-range-percentage":100,"white-list":false,"snooper-enabled":true,"enforce-whitelist":false,"max-world-size":29999984}}',
-                    credentials: 'include'
-                })).then(restartServer()).then(alert('Sucessfully reset server.properties!'));
-            }
-            
-            async function bootServer() {
-                try {
-                    await axios.post(`/proxy/server/${serverId}/start_service`);
-                    await updateServerInfo();
-                } catch (error) {
-                    alert('Failed to boot server');
-                }
-            }
+    if (bytes >= PiB) return (bytes / PiB).toFixed(2) + ' PB';
+    if (bytes >= TiB) return (bytes / TiB).toFixed(2) + ' TB';
+    if (bytes >= GiB) return (bytes / GiB).toFixed(2) + ' GB';
+    if (bytes >= MiB) return (bytes / MiB).toFixed(2) + ' MB';
+    return (bytes / KiB).toFixed(2) + ' KB';
+}
+
+function updateDOM() {
+    const server = serverData;
+    if (!server) return;
     
-            async function stopServer() {
-                try {
-                    await axios.post(`/proxy/server/${serverId}/shutdown`);
-                    await updateServerInfo();
-                } catch (error) {
-                    alert('Failed to stop server');
-                }
-            }
+    document.getElementById('server-name').textContent = `Server: ${server.name}`;
     
-            async function restartServer() {
-                try {
-                    await axios.post(`/proxy/server/${serverId}/restart`);
-                    await updateServerInfo();
-                } catch (error) {
-                    alert('Failed to restart server');
-                }
-            }
+    let statusText = '';
+    let statusClass = '';
     
-            async function hibernateServer() {
-                try {
-                    await axios.post(`/proxy/server/${serverId}/destroy_service`);
-                    await updateServerInfo();
-                } catch (error) {
-                    alert('Failed to restart server');
-                }
-            }
-            
-            async function updateServer() {
-                fetch(`/proxy/v1/server/${serverId}/version/install`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        type: "PAPER",
-                        version_id: "66ba7dc16b14b54cfc0e4edc"
-                    }),
-                    credentials: 'include'
-                })
-                .then(response => response.json())
-                .catch((error) => alert('Error in console') && console.error('Error:', error));
-                resetProps();
-            }
+    if (server.suspended) {
+        statusText = 'Suspended';
+        statusClass = 'bg-red-500';
+    } else {
+        switch (server.status) {
+            case 'SERVICE_OFFLINE':
+                statusText = 'Hibernating';
+                statusClass = 'bg-gray-500';
+                break;
+            case 'OFFLINE':
+                statusText = 'Offline';
+                statusClass = 'bg-red-500';
+                break;
+            case 'STARTING':
+                statusText = 'Starting';
+                statusClass = 'bg-yellow-500';
+                break;
+            case 'ONLINE':
+                statusText = 'Online';
+                statusClass = 'bg-green-500';
+                break;
+            default:
+                statusText = server.status;
+                statusClass = 'bg-gray-500';
+        }
+    }
     
-            async function upgradeServer() {
-                try {
-                    const payload = {
-                        ram: "gb32",
-                        max_players: "default",
-                        online_status: "always_online",
-                        disk_space: "default",
-                        cpu: "pro",
-                        backups: "standard",
-                        cost: 0,
-                    };
-            
-                    await axios.post(`/proxy/v1/server/${serverId}/custom_plan`, payload);
-                    await updateServerInfo();
-                } catch (error) {
-                    alert('Failed to upgrade server');
-                    console.log(error);
-                }
-            }
-    
-            function getCookie(name) {
-                const value = `; ${document.cookie}`;
-                const parts = value.split(`; ${name}=`);
-                if (parts.length === 2) return parts.pop().split(';').shift();
-            }
-    
-            function updateDOM(server) {
-                document.getElementById('server-name').textContent = `Server: ${server.name}`;
-                
-                let statusText = '';
-                let statusClass = '';
-                
-                if (server.suspended) {
-                    statusText = 'Suspended';
-                    statusClass = 'bg-red-500';
-                } else {
-                    switch (server.status) {
-                        case 'SERVICE_OFFLINE':
-                            statusText = 'Hibernating';
-                            statusClass = 'bg-gray-500';
-                            break;
-                        case 'OFFLINE':
-                            statusText = 'Offline';
-                            statusClass = 'bg-red-500';
-                            break;
-                        case 'STARTING':
-                            statusText = 'Starting';
-                            statusClass = 'bg-yellow-500';
-                            break;
-                        case 'ONLINE':
-                            statusText = 'Online';
-                            statusClass = 'bg-green-500';
-                            break;
-                        default:
-                            statusText = server.status;
-                            statusClass = 'bg-gray-500';
-                    }
-                }
-                
-                document.querySelector('.status').textContent = statusText;
-                document.querySelector('.status').className = `px-3 py-1 rounded-full text-sm font-medium status ${statusClass}`;
-                document.querySelector('.players').textContent = `${server.player_count}/${server.max_players}`;
-                document.querySelector('.ram').textContent = `${(server.max_ram / 1024).toFixed(1)} GB`;
-                document.querySelector('.version').textContent = server.server_version?.version || 'Unknown';
-            }
-    
-            async function updateServerInfo() {
-                try {
-                    const response = await axios.get('/getData');
-                    const server = response.data.find(s => s._id === serverId);
-                    if (!server) return alert('Server not found');
-                    
-                    updateDOM(server);
-                    lastData = { ...server };
-                } catch (error) {
-                    console.error('Failed to fetch server data:', error);
-                }
-            }
-    
-            updateServerInfo();
-            updateInterval = setInterval(updateServerInfo, 3000);
-            window.onbeforeunload = () => {
-                clearInterval(updateInterval);
-            }
+    document.querySelector('.status').textContent = statusText;
+    document.querySelector('.status').className = `px-3 py-1 rounded-full text-sm font-medium status ${statusClass}`;
+    document.querySelector('.players').textContent = `${server.player_count}/${server.max_players}`;
+    document.querySelector('.ram').textContent = `${(server.max_ram / 1024).toFixed(1)} GB`;
+    document.querySelector('.version').textContent = server.server_version?.version || 'Unknown';
+}
+
+async function updateServerInfo() {
+    try {
+        const response = await axios.get('/getData');
+        const server = response.data.find(s => s._id === serverId);
+        if (!server) throw new Error('Server not found');
+        
+        serverData = { ...server };
+        updateDOM();
+    } catch (error) {
+        console.error('Failed to fetch server data:', error);
+    }
+}
+
+async function startServer() {
+    try {
+        await axios.post(`/proxy/server/${serverId}/start`);
+        await updateServerInfo();
+    } catch (error) {
+        alert('Failed to start server');
+    }
+}
+
+async function bootServer() {
+    try {
+        await axios.post(`/proxy/server/${serverId}/start_service`);
+        await updateServerInfo();
+    } catch (error) {
+        alert('Failed to boot server');
+    }
+}
+
+async function stopServer() {
+    try {
+        await axios.post(`/proxy/server/${serverId}/shutdown`);
+        await updateServerInfo();
+    } catch (error) {
+        alert('Failed to stop server');
+    }
+}
+
+async function restartServer() {
+    try {
+        await axios.post(`/proxy/server/${serverId}/restart`);
+        await updateServerInfo();
+    } catch (error) {
+        alert('Failed to restart server');
+    }
+}
+
+async function hibernateServer() {
+    try {
+        await axios.post(`/proxy/server/${serverId}/destroy_service`);
+        await updateServerInfo();
+    } catch (error) {
+        alert('Failed to hibernate server');
+    }
+}
+
+async function updateServer() {
+    try {
+        await fetch(`/proxy/v1/server/${serverId}/version/install`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: "PAPER",
+                version_id: "66ba7dc16b14b54cfc0e4edc"
+            }),
+            credentials: 'include'
+        });
+        resetProps();
+    } catch (error) {
+        alert('Failed to update server');
+        console.error('Error:', error);
+    }
+}
+
+async function upgradeServer() {
+    try {
+        const payload = {
+            ram: "gb32",
+            max_players: "default",
+            online_status: "always_online",
+            disk_space: "default",
+            cpu: "pro",
+            backups: "standard",
+            cost: 0,
+        };
+        
+        await axios.post(`/proxy/v1/server/${serverId}/custom_plan`, payload);
+        await updateServerInfo();
+    } catch (error) {
+        alert('Failed to upgrade server');
+        console.error(error);
+    }
+}
+
+async function resetProps() {
+    try {
+        await fetch(`/proxy/file/${serverId}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{"files":["/server.properties"]}',
+            credentials: 'include'
+        });
+        
+        await fetch(`/proxy/server/${serverId}/edit_server_properties`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{"serverProperties":{"max-players":10,"view-distance":6,"gamemode":"survival","difficulty":"easy","spawn-mobs":true,"spawn-animals":true,"force-gamemode":false,"level-type":"default","spawn-npcs":true,"allow-nether":true,"pvp":true,"allow-flight":false,"spawn-protection":16,"announce-player-achievements":true,"enable-command-block":false,"require-resource-pack":false,"hardcore":false,"level-name":"world","max-tick-time":60000,"resource-pack-prompt":"","op-permission-level":4,"entity-broadcast-range-percentage":100,"white-list":false,"snooper-enabled":true,"enforce-whitelist":false,"max-world-size":29999984}}',
+            credentials: 'include'
+        });
+        
+        await restartServer();
+        alert('Successfully reset server.properties!');
+    } catch (error) {
+        alert('Failed to reset properties');
+        console.error(error);
+    }
+}
+
+updateServerInfo();
+updateInterval = setInterval(updateServerInfo, 3000);
+
+window.onbeforeunload = () => {
+    clearInterval(updateInterval);
+};
+
+// Export functions for global access
+window.startServer = startServer;
+window.bootServer = bootServer;
+window.stopServer = stopServer;
+window.restartServer = restartServer;
+window.hibernateServer = hibernateServer;
+window.updateServer = updateServer;
+window.upgradeServer = upgradeServer;
+window.resetProps = resetProps;
+window.formatBytes = formatBytes;
+
+// Export variables for global access
+window.serverData = serverData;
+window.serverId = serverId;
+
         </script>
 
         <div id="dynamic_content" class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8"><%- include(page) %></div>

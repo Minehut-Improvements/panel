@@ -31,73 +31,64 @@
 </div>
 
 <script>
-    const advancedMode = document.getElementById('advanced-mode');
-    const detailElements = document.querySelectorAll('[id$="-details"]');
 
-    function formatBytes(value, unit = 'B') {
-        const KiB = 1024;
-        const MiB = KiB * 1024;
-        const GiB = MiB * 1024;
-        const TiB = GiB * 1024;
-        const PiB = TiB * 1024;
-        
-        // Convert input to bytes
-        let bytes = value;
-        switch (unit.toUpperCase()) {
-            case 'KIB': bytes = value * KiB; break;
-            case 'MIB': bytes = value * MiB; break;
-            case 'GIB': bytes = value * GiB; break;
-            case 'TIB': bytes = value * TiB; break;
-            case 'PIB': bytes = value * PiB; break;
-        }
-        
-        // Determine appropriate unit
-        if (bytes >= PiB) return (bytes / PiB).toFixed(2) + ' PB';
-        if (bytes >= TiB) return (bytes / TiB).toFixed(2) + ' TB';
-        if (bytes >= GiB) return (bytes / GiB).toFixed(2) + ' GB';
-        if (bytes >= MiB) return (bytes / MiB).toFixed(2) + ' MB';
-        return (bytes / KiB).toFixed(2) + ' KB';
-    }
+const advancedMode = document.getElementById('advanced-mode');
+const detailElements = document.querySelectorAll('[id$="-details"]');
 
-    function updateMetrics() {
-        fetch(`/proxy/metrics/${serverId}`)
-            .then(response => response.json())
-            .then(data => {
-                // CPU
-                const cpuPercent = (data.cpu.usage / data.cpu.request * 100).toFixed(1);
-                document.getElementById('cpu-percent').textContent = cpuPercent + '%';
-                document.getElementById('cpu-details').innerHTML = `
-                    Usage: ${data.cpu.usage}<br>
-                    Request: ${data.cpu.request}<br>
-                    Limit: ${data.cpu.limit}
-                `;
+function updateMetrics() {
+    fetch(`/proxy/metrics/${serverId}`)
+        .then(response => response.json())
+        .then(data => {
+            // CPU
+            const cpuPercent = (data.cpu.usage / data.cpu.request * 100).toFixed(1);
+            document.getElementById('cpu-percent').textContent = cpuPercent + '%';
+            document.getElementById('cpu-details').innerHTML = `
+                Usage: ${data.cpu.usage}<br>
+                Request: ${data.cpu.request}<br>
+                Limit: ${data.cpu.limit}
+            `;
+            // Memory
+            const memoryPercent = ((data.memory.usage / data.memory.request) * 100).toFixed(1);
+            document.getElementById('memory-percent').textContent = memoryPercent + '%';
+            document.getElementById('memory-number').textContent = '(' + formatBytes(data.memory.usage, 'MiB') + ")";
+            document.getElementById('memory-details').innerHTML = `
+                Usage: ${data.memory.usage} MB<br>
+                Request: ${data.memory.request} MB<br>
+                Limit: ${data.memory.limit} MB
+            `;
+            // Disk
+            document.getElementById('disk-usage').textContent = formatBytes(data.disk.usage, 'KiB');
+            document.getElementById('disk-details').innerHTML = `
+                Usage: ${data.disk.usage} KB<br>
+                ${data.disk.limit ? `Limit: ${data.disk.limit} KB` : 'No limit set'}
+            `;
+        })
+        .catch(error => console.error('Error fetching metrics:', error));
+}
 
-                // Memory
-                const memoryPercent = ((data.memory.usage / data.memory.request) * 100).toFixed(1);
-                document.getElementById('memory-percent').textContent = memoryPercent + '%';
-                document.getElementById('memory-number').textContent = '(' + formatBytes(data.memory.usage, 'MiB') + ")";
-                document.getElementById('memory-details').innerHTML = `
-                    Usage: ${data.memory.usage} MB<br>
-                    Request: ${data.memory.request} MB<br>
-                    Limit: ${data.memory.limit} MB
-                `;
-
-                // Disk
-                document.getElementById('disk-usage').textContent = formatBytes(data.disk.usage, 'KiB');
-                document.getElementById('disk-details').innerHTML = `
-                    Usage: ${data.disk.usage} KB<br>
-                    ${data.disk.limit ? `Limit: ${data.disk.limit} KB` : 'No limit set'}
-                `;
-            })
-            .catch(error => console.error('Error fetching metrics:', error));
-    }
-
-    advancedMode.addEventListener('change', () => {
-        detailElements.forEach(el => {
-            el.classList.toggle('hidden');
-        });
+advancedMode.addEventListener('change', () => {
+    detailElements.forEach(el => {
+        el.classList.toggle('hidden');
     });
+});
 
-    updateMetrics();
-    setInterval(updateMetrics, 1000);
+// Start the loop here
+updateMetrics();
+setInterval(updateMetrics, 1000);
+
+// Pause interval when the panel is hidden, unpause when visible
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+        clearInterval(metricsInterval);
+    } else if (document.visibilityState === "visible") {
+        metricsInterval = setInterval(updateMetrics, 1000);
+    }
+});
+
+// Stop the interval when the user goes away
+window.onbeforeunload = () => {
+    clearInterval(metricsInterval);
+    return null;
+};
+
 </script>
