@@ -8,6 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://oddbyte.dev/js/cursor.js"></script>
     <link rel="stylesheet" href="https://oddbyte.dev/styles/cursor.css">
+    <style>
+        .overflow-wrap-anywhere { overflow-wrap: anywhere; }
+    </style>
 </head>
 <body class="h-full flex flex-col text-white">
     <div class="container mx-auto px-4 py-8 max-w-[90%]">
@@ -74,12 +77,12 @@
             <div class="fixed inset-0 bg-[rgba(17,25,40,0.75)]"></div>
         
             <div class="bg-[rgba(17,25,40,0.95)] border border-[rgba(255,255,255,0.125)] rounded-xl p-8 max-w-md mx-4 relative z-10 transform transition-all duration-200 ease-out scale-95 opacity-0" id="alert-box">
-                <div class="flex items-start mb-6">
+                <div class="flex items-start mb-6 min-w-[35%]">
                     <div id="alert-icon" class="mr-4 flex-shrink-0"></div>
         
                     <div class="flex-1">
                         <h3 id="alert-title" class="text-lg font-semibold mb-2 text-white"></h3>
-                        <p id="alert-content" class="text-gray-300"></p>
+                        <p id="alert-content" class="overflow-wrap-anywhere break-words text-gray-300"></p>
                     </div>
                 </div>
         
