@@ -1,4 +1,4 @@
-![{2A6FF423-B5D8-42B9-B13D-323E37D62D27}](https://github.com/user-attachments/assets/16bebbb7-def5-4980-ba45-196f84f823ca)# Our take on the Minehut Panel
+# Our take on the Minehut Panel
 This frontend runs on Minehut's Dev servers. You must make a new account there if you don't already have one. You cannot use your production ("normal") minehut account. If you do not know what this means, just follow the login steps, but make an account first.
 
 Frontend is in the `views/` folder.
