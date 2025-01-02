@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Server Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://oddbyte.dev/js/cursor.js"></script>
     <link rel="stylesheet" href="https://oddbyte.dev/styles/cursor.css">
@@ -95,6 +94,81 @@
         </div>
 
         <script>
+// oHttp
+const oHttp = {
+    connection: function() {
+        return {
+            request: {
+                url: null,
+                type: null
+            },
+            response: {
+                code: null,
+                body: null,
+                connection: null
+            }
+        };
+    },
+
+    async makeRequest(url, type, body = null) {
+        const conn = this.connection();
+        conn.request.url = url;
+        conn.request.type = type;
+
+        try {
+            const options = {
+                method: type,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            };
+
+            if (body) {
+                options.body = body;
+            }
+
+            const response = await fetch(url, options);
+            const responseData = await response.json();
+
+            conn.response.code = response.status;
+            conn.response.body = responseData;
+            conn.response.connection = response;
+
+            return conn;
+        } catch (error) {
+            throw {
+                error: error.message,
+                connection: conn
+            };
+        }
+    },
+
+    get: function(url) {
+        return this.makeRequest(url, 'GET');
+    },
+
+    post: function(url, body) {
+        return this.makeRequest(url, 'POST', body);
+    },
+
+    put: function(url, body) {
+        return this.makeRequest(url, 'PUT', body);
+    },
+
+    delete: function(url) {
+        return this.makeRequest(url, 'DELETE');
+    },
+
+    options: function(url) {
+        return this.makeRequest(url, 'OPTIONS');
+    },
+
+    other: function(url, type, body) {
+        return this.makeRequest(url, type, body);
+    }
+}
+
 // Variables
 let serverData = {};
 const serverId = window.location.pathname.split('/')[2];
@@ -226,8 +300,8 @@ function updateDOM() {
 
 async function updateServerInfo() {
     try {
-        const response = await axios.get('/getData');
-        const server = response.data.find(s => s._id === serverId);
+        const conn = await oHttp.get('/getData');
+        const server = conn.response.body.find(s => s._id === serverId);
         if (!server) {
             errorAlert('Failed to find server!');
             return;
@@ -236,7 +310,7 @@ async function updateServerInfo() {
         serverData = { ...server };
         updateDOM();
     } catch (error) {
-        errorAlert(`Failed to fetch server data: ${error}`)
+        errorAlert(`Failed to fetch server data: ${error.connection?.response?.body || 'Unknown error'}`)
         console.error('Failed to fetch server data:', error);
     }
 }
@@ -244,65 +318,65 @@ async function updateServerInfo() {
 // Server management functions
 async function startServer() {
     try {
-        await axios.post(`/proxy/server/${serverId}/start`);
+        await oHttp.post(`/proxy/server/${serverId}/start`);
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to start server: ${error}`);
+        errorAlert(`Failed to start server: ${error.connection?.response?.body || 'Unknown error'}`);
+        console.error('Failed to start server:', error)
     }
 }
 
 async function bootServer() {
     try {
-        await axios.post(`/proxy/server/${serverId}/start_service`);
+        await oHttp.post(`/proxy/server/${serverId}/start_service`);
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to boot server: ${error}`);
+        errorAlert(`Failed to boot server: ${error.connection?.response?.body || 'Unknown error'}`);
+        console.error('Failed to boot server:', error);
     }
 }
 
 async function stopServer() {
     try {
-        await axios.post(`/proxy/server/${serverId}/shutdown`);
+        await oHttp.post(`/proxy/server/${serverId}/shutdown`);
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to stop server: ${error}`);
+        errorAlert(`Failed to stop server: ${error.connection?.response?.body || 'Unknown error'}`);
+        console.error('Failed to stop server:', error);
     }
 }
 
 async function restartServer() {
     try {
-        await axios.post(`/proxy/server/${serverId}/restart`);
+        await oHttp.post(`/proxy/server/${serverId}/restart`);
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to restart server: ${error}`);
+        errorAlert(`Failed to restart server: ${error.connection?.response?.body || 'Unknown error'}`);
+        console.error('Failed to restart server:', error);
     }
 }
 
 async function hibernateServer() {
     try {
-        await axios.post(`/proxy/server/${serverId}/destroy_service`);
+        await oHttp.post(`/proxy/server/${serverId}/destroy_service`);
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to hibernate server: ${error}`);
+        errorAlert(`Failed to hibernate server: ${error.connection?.response?.body || 'Unknown error'}`);
+        console.error('Failed to hibernate server:', error);
     }
 }
 
 async function updateServer() {
     try {
-        await fetch(`/proxy/v1/server/${serverId}/version/install`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                type: "PAPER",
-                version_id: "66ba7dc16b14b54cfc0e4edc"
-            }),
-            credentials: 'include'
+        await oHttp.post(`/proxy/v1/server/${serverId}/version/install`, {
+            type: "PAPER",
+            version_id: "66ba7dc16b14b54cfc0e4edc"
         });
         resetProps(true);
         alert('Successfully updated the server!');
     } catch (error) {
-        errorAlert(`Failed to set server version: ${error}`);
-        console.error('Error:', error);
+        errorAlert(`Failed to set server version: ${error.connection?.response?.body || 'Unknown error'}`);
+        console.error('Failed to set server version:', error);
     }
 }
 
@@ -318,35 +392,29 @@ async function upgradeServer() {
             cost: 0,
         };
         
-        await axios.post(`/proxy/v1/server/${serverId}/custom_plan`, payload);
+        await oHttp.post(`/proxy/v1/server/${serverId}/custom_plan`, payload);
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to upgrade server: ${error}`);
-        console.error(error);
+        errorAlert(`Failed to upgrade server: ${error.connection?.response?.body || 'Unknown error'}`);
+        console.error('Failed to upgrade server:', error);
     }
 }
 
 async function resetProps(hideAlert = false) {
     try {
-        await fetch(`/proxy/file/${serverId}/delete`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: '{"files":["/server.properties"]}',
-            credentials: 'include'
+        await oHttp.post(`/proxy/file/${serverId}/delete`, {
+            files: ["/server.properties"]
         });
         
-        await fetch(`/proxy/server/${serverId}/edit_server_properties`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: '{"serverProperties":{"max-players":10,"view-distance":6,"gamemode":"survival","difficulty":"easy","spawn-mobs":true,"spawn-animals":true,"force-gamemode":false,"level-type":"default","spawn-npcs":true,"allow-nether":true,"pvp":true,"allow-flight":false,"spawn-protection":16,"announce-player-achievements":true,"enable-command-block":false,"require-resource-pack":false,"hardcore":false,"level-name":"world","max-tick-time":60000,"resource-pack-prompt":"","op-permission-level":4,"entity-broadcast-range-percentage":100,"white-list":false,"snooper-enabled":true,"enforce-whitelist":false,"max-world-size":29999984}}',
-            credentials: 'include'
+        await oHttp.post(`/proxy/server/${serverId}/edit_server_properties`, {
+            "serverProperties":{"max-players":10,"view-distance":6,"gamemode":"survival","difficulty":"easy","spawn-mobs":true,"spawn-animals":true,"force-gamemode":false,"level-type":"default","spawn-npcs":true,"allow-nether":true,"pvp":true,"allow-flight":false,"spawn-protection":16,"announce-player-achievements":true,"enable-command-block":false,"require-resource-pack":false,"hardcore":false,"level-name":"world","max-tick-time":60000,"resource-pack-prompt":"","op-permission-level":4,"entity-broadcast-range-percentage":100,"white-list":false,"snooper-enabled":true,"enforce-whitelist":false,"max-world-size":29999984}
         });
         
         await restartServer();
         if (!hideAlert) alert('Successfully reset server.properties!');
     } catch (error) {
-        errorAlert(`Failed to reset properties: ${error}`);
-        console.error(error);
+        errorAlert(`Failed to reset server properties: ${error.connection?.response?.body || 'Unknown error'}`);
+        console.error('Failed to reset server properties:', error);
     }
 }
 
@@ -369,6 +437,7 @@ window.upgradeServer = upgradeServer;
 window.resetProps = resetProps;
 window.formatBytes = formatBytes;
 window.getCookie = getCookie;
+window.oHttp = oHttp;
 
 // Replace alert with our alert system
 window.alert = showAlert;

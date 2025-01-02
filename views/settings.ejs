@@ -69,10 +69,11 @@ function addPort() {
 
 async function fetchPorts() {
     try {
-        const response = await axios.get(`/proxy/v1/server/${serverId}/port`);
-        return response.data;
+        const conn = await oHttp.get(`/proxy/v1/server/${serverId}/port`);
+        return conn.response.body;
     } catch (error) {
-        console.error('Failed to fetch ports:', error);
+        errorAlert(`Failed to get ports: ${error.connection?.response?.body || 'Unknown error'}`)
+        console.error('Failed to get ports:', error);
         return [];
     }
 }
@@ -82,23 +83,23 @@ async function createPort() {
         const portInput = document.getElementById('new-port-input');
         const in_port = parseInt(portInput.value, 10);
         let type = 'TCP';
-        const response = await axios.post(`/proxy/v1/server/${serverId}/port`, { serverId: serverId, type, in_port });
-        alert('Port created successfully: ' + response.data.port);
+        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/port`, { serverId: serverId, type, in_port });
+        alert('Port created successfully: ' + conn.response.body.port);
         window.location.reload();
     } catch (error) {
-        errorAlert(`Failed to create port: ${error}`);
-        console.error(`Failed to create port: ${error}`);
+        errorAlert(`Failed to open port: ${error.connection?.response?.body || 'Unknown error'}`)
+        console.error('Failed to open port:', error);
     }
 }
 
 async function deletePort(portId) {
     try {
-        await axios.delete(`/proxy/v1/server/${serverId}/port/${portId}`);
+        await oHttp.delete(`/proxy/v1/server/${serverId}/port/${portId}`);
         alert('Port deleted successfully');
         window.location.reload();
     } catch (error) {
-        errorAlert(`Failed to delete port: ${error}`);
-        console.error(error);
+        errorAlert(`Failed to delete port: ${error.connection?.response?.body || 'Unknown error'}`)
+        console.error('Failed to delete port:', error);
     }
 }
 
@@ -153,8 +154,9 @@ let serverProperties = {};
 
 async function loadProperties() {
     try {
-        const response = await axios.get(`/proxy/file/${serverId}/read/server.properties`);
-        const content = response.data.content;
+        const connection = await oHttp.get(`/proxy/file/${serverId}/read/server.properties`);
+        const content = connection.response.body.content;
+
         serverProperties = Object.fromEntries(
             content.split('\n')
                 .filter(line => line && !line.startsWith('#'))
@@ -166,9 +168,11 @@ async function loadProperties() {
                         value : Number(value)];
                 })
         );
+
         renderPropertiesForm();
     } catch (error) {
-        console.error('Failed to fetch properties:', error);
+        errorAlert(`Failed to fetch server.properties: ${error.connection?.response?.body || 'Unknown error'}`)
+        console.error('Failed to fetch server.properties:', error);
     }
 }
 
@@ -305,16 +309,16 @@ async function submitProperties(e) {
     });
 
     try {
-        await axios({
-            method: editMode === 'edit' ? 'POST' : 'PATCH',
+        await oHttp.other({
             url: `/proxy/server/${serverId}/${editMode === 'edit' ? 'edit' : 'patch'}_server_properties`,
+            type: editMode === 'edit' ? 'POST' : 'PATCH',
             data: { serverProperties: properties }
         });
         restartServer();
         alert('Properties updated successfully');
     } catch (error) {
-        errorAlert('Failed to update properties');
-        console.error(error);
+        errorAlert(`Failed to update server properties: ${error.connection?.response?.body || 'Unknown error'}`)
+        console.error('Failed to update server properties:', error);
     }
 }
 
