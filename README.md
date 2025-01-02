@@ -4,11 +4,11 @@ This is extension that redirects minehut's login request to our panel. It does n
 
 ### Disclaimer:
 
-The addon will be disabled when you restart your firefox. So you had to install it again.
+The addon will be disabled when you restart your firefox. So you will have to reinstall it every time you restart firefox.
 
 ### Installing the extension:
 1. Download the [extension](https://github.com/Minehut-Improvements/panel/raw/refs/heads/extension-firefox/Minehut_Improved-Firefox-Port.zip) zip file.
-2. Go to ``about:debugging#/runtime/this-firefox`` and click on ``Load Temporary Add-on``
+2. Go to `about:debugging#/runtime/this-firefox` and click on `Load Temporary Add-on`
 
 ![image](https://github.com/user-attachments/assets/c6108e30-d0a0-4589-bb06-3bbb1993676d)
 
