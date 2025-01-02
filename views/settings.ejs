@@ -64,7 +64,7 @@ function addPort() {
 
 async function fetchPorts() {
     try {
-        const response = await axios.get(`/proxy/v1/server/${window.serverId}/port`);
+        const response = await axios.get(`/proxy/v1/server/${serverId}/port`);
         return response.data;
     } catch (error) {
         console.error('Failed to fetch ports:', error);
@@ -77,7 +77,7 @@ async function createPort() {
         const portInput = document.getElementById('new-port-input');
         const in_port = parseInt(portInput.value, 10);
         let type = 'TCP';
-        const response = await axios.post(`/proxy/v1/server/${window.serverId}/port`, { serverId: window.serverId, type, in_port });
+        const response = await axios.post(`/proxy/v1/server/${serverId}/port`, { serverId: serverId, type, in_port });
         alert('Port created successfully: ' + response.data.port);
         window.location.reload();
     } catch (error) {
@@ -88,7 +88,7 @@ async function createPort() {
 
 async function deletePort(portId) {
     try {
-        await axios.delete(`/proxy/v1/server/${window.serverId}/port/${portId}`);
+        await axios.delete(`/proxy/v1/server/${serverId}/port/${portId}`);
         alert('Port deleted successfully');
         window.location.reload();
     } catch (error) {
@@ -148,7 +148,7 @@ let serverProperties = {};
 
 async function loadProperties() {
     try {
-        const response = await axios.get(`/proxy/file/${window.serverId}/read/server.properties`);
+        const response = await axios.get(`/proxy/file/${serverId}/read/server.properties`);
         const content = response.data.content;
         serverProperties = Object.fromEntries(
             content.split('\n')
@@ -302,7 +302,7 @@ async function submitProperties(e) {
     try {
         await axios({
             method: editMode === 'edit' ? 'POST' : 'PATCH',
-            url: `/proxy/server/${window.serverId}/${editMode === 'edit' ? 'edit' : 'patch'}_server_properties`,
+            url: `/proxy/server/${serverId}/${editMode === 'edit' ? 'edit' : 'patch'}_server_properties`,
             data: { serverProperties: properties }
         });
         restartServer();
