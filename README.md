@@ -26,3 +26,28 @@ The API middleware is in the `index.js` file. This middleware handles authentica
 
 ### File manager:
 * Todo: Make file manager
+
+# TODO:
+### In order of priority:
+- Allow users to modify ports
+- Make the file manager.
+- Add force hibernation button.
+- Add MOTD changer.
+- Show SFTP info.
+- Add better version switcher
+- Add external domain support
+- Add better plan switcher
+- Add re-ordering servers.
+- Add renaming servers.
+- Add server discovery settings.
+- Add backup support.
+- Add user page (minecraft / GS linking, transaction log, etc).
+- Add resource pack support.
+- Add world settings / upload.
+- Add better subuser support.
+- Add external server support.
+- Add public server list.
+- Add proxy support.
+- Add advertising support.
+- Add toggling cosmetics.
+- Changing FMCS link.
