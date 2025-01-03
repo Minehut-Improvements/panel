@@ -1,4 +1,4 @@
-# Our take on the Minehut Panel
+# Our Minehut Panel
 This frontend runs on Minehut's Dev servers. You must make a new account there if you don't already have one. You cannot use your production ("normal") minehut account. If you do not know what this means, just follow the login steps, but make an account first.
 If for whatever reason you don't want to use the dev servers, it is extremely easy to switch over to the normal ones (just remove the `.dev` in all API urls)
 
@@ -35,14 +35,14 @@ We will allow you to use credits that you already have (buying ranks, server pla
 
 # TODO:
 ### In order of priority:
-- Allow users to modify ports
+- Allow users to modify ports.
 - Make the file manager.
 - Add force hibernation button.
 - Add MOTD changer.
 - Show SFTP info.
-- Add better version switcher
-- Add external domain support
-- Add better plan switcher
+- Add better version switcher.
+- Add external domain support.
+- Add better plan switcher.
 - Add re-ordering servers.
 - Add renaming servers.
 - Add server discovery settings.
@@ -51,6 +51,7 @@ We will allow you to use credits that you already have (buying ranks, server pla
 - Add resource pack support.
 - Add world settings / upload.
 - Add better subuser support.
+- Add mobile support.
 - Add external server support.
 - Add public server list.
 - Add proxy support.
