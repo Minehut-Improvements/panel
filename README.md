@@ -1,5 +1,6 @@
 # Our take on the Minehut Panel
 This frontend runs on Minehut's Dev servers. You must make a new account there if you don't already have one. You cannot use your production ("normal") minehut account. If you do not know what this means, just follow the login steps, but make an account first.
+If for whatever reason you don't want to use the dev servers, it is extremely easy to switch over to the normal ones (just remove the `.dev` in all API urls)
 
 As this is built entirely from scratch, without using any minehut's code, there are some features that this panel will be missing, especially as they continue to add new features. If you think that you can help us add features, please, make a PR! If you want to suggest a feature but don't know how to code it, make a Issue. If you found a bug, please make a Issue.
 
