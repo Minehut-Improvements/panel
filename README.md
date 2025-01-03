@@ -2,6 +2,8 @@
 
 This is extension that redirects minehut's login request to our panel. It does not redirect your credentials, just the session token.
 
+### To use this in mobile, install Kiwi browser, and load the .zip file directly
+
 ### IF YOU ARE ON FIREFOX, USE OUR [FIREFOX PORT](https://github.com/Minehut-Improvements/panel/tree/extension-firefox)!
 
 ### Installing the extension:
