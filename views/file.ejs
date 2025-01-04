@@ -1,11 +1,303 @@
-<div class="grid grid-cols-2 gap-4">
-    <div class="card">
-        <h3 class="text-xl font-bold mb-4">File Explorer</h3>
-        <div id="file-tree" class="h-96 overflow-y-auto"></div>
+<div class="p-6">
+    <div class="flex items-center gap-4 mb-6">
+        <div class="flex-1 flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-lg border border-gray-600">
+            <span class="text-gray-400">/</span>
+            <input type="text" id="path-input" class="flex-1 bg-transparent border-none outline-none text-white" value="">
+        </div>
+        <button onclick="navigatePath()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-200">Go</button>
     </div>
-    <div class="card">
-        <h3 class="text-xl font-bold mb-4">File Editor</h3>
-        <textarea id="file-content" class="w-full h-80 p-2 bg-opacity-30 bg-gray-900 border border-gray-600 rounded mb-4"></textarea>
-        <button id="save-file" class="bg-green-600 hover:bg-green-700">Save</button>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Files</h3>
+                <div class="space-x-2">
+                    <button onclick="createFolder()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200">New Folder</button>
+                    <button onclick="uploadFile()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200">Upload</button>
+                    <input type="file" id="file-input" class="hidden" onchange="handleFileUpload()">
+                </div>
+            </div>
+            <div id="file-tree" class="h-96 lg:h-[calc(100vh-300px)] overflow-y-auto divide-y divide-gray-700"></div>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Editor</h3>
+                <button onclick="saveFile()" id="save-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 disabled">Save</button>
+            </div>
+            <textarea id="file-content" class="w-full h-96 lg:h-[calc(100vh-300px)] p-4 bg-gray-900 border border-gray-600 rounded-lg font-mono text-white resize-none"></textarea>
+        </div>
     </div>
 </div>
+
+<script>
+let currentPath = '/';
+let currentFile = '';
+let fileContentModified = false;
+
+// Sorts files (duh)
+function sortFiles(files) {
+    return files.sort((a, b) => {
+        // Primary sort: directories first, then files
+        if (a.directory === b.directory) {
+            // Secondary sort: alphabetical by name, case-insensitive
+            return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+        }
+        // Directories come before files
+        return a.directory ? -1 : 1;
+    });
+}
+
+// Function to clean path (remove double slashes)
+function cleanPath(path) {
+    // Replace multiple consecutive slashes with a single slash and ensure no trailing slash for non-root paths
+    path = path.replace(/\/+/g, '/');
+    if (path !== '/' && path.endsWith('/')) {
+        path = path.slice(0, -1);
+    }
+    return path;
+}
+
+// Function to get parent directory path
+function getParentPath(path) {
+    path = cleanPath(path);
+    if (path === '/') return '/';
+    // Remove trailing slash if it exists
+    path = path.replace(/\/$/, '');
+    // Get parent directory
+    return path.substring(0, path.lastIndexOf('/')) || '/';
+}
+
+async function loadDirectory(path = '/') {
+    try {
+        // Clean the path first
+        path = cleanPath(path);
+        const response = await oHttp.get(`/proxy/file/${serverId}/list/${path}`);
+        if (response.response.code !== 200) throw new Error('Failed to connect to file manager, please try again later.');
+        
+        let files = response.response.body.files || response.response.body;
+        if (!Array.isArray(files)) {
+            console.error('Invalid files data:', files);
+            throw new Error('Invalid file data received');
+        }
+        
+        const fileTree = document.getElementById('file-tree');
+        fileTree.innerHTML = '';
+
+        // Add parent directory option if not at root
+        if (path !== '/') {
+            const parentItem = document.createElement('div');
+            parentItem.className = 'flex items-center p-3 hover:bg-gray-700 cursor-pointer group';
+            
+            const parentIcon = document.createElement('span');
+            parentIcon.className = 'mr-3 text-lg';
+            parentIcon.textContent = '📁';
+            
+            const parentDetails = document.createElement('div');
+            parentDetails.className = 'flex-1';
+            
+            const parentName = document.createElement('div');
+            parentName.textContent = '..';
+            parentName.className = 'font-medium';
+            
+            parentDetails.appendChild(parentName);
+            parentItem.appendChild(parentIcon);
+            parentItem.appendChild(parentDetails);
+            parentItem.onclick = () => navigateDirectory(getParentPath(path));
+            
+            fileTree.appendChild(parentItem);
+        }
+
+        // Sort and display the files
+        files = sortFiles(files);
+        
+        files.forEach(file => {
+            const item = document.createElement('div');
+            item.className = 'flex items-center p-3 hover:bg-gray-700 cursor-pointer group';
+            
+            const icon = document.createElement('span');
+            icon.className = 'mr-3 text-lg';
+            icon.textContent = file.directory ? '📁' : '📄';
+            
+            const details = document.createElement('div');
+            details.className = 'flex-1';
+            
+            const name = document.createElement('div');
+            name.textContent = file.name;
+            name.className = 'font-medium';
+            
+            const meta = document.createElement('div');
+            meta.className = 'text-sm text-gray-400';
+            meta.textContent = `${file.showSize ? filesize(file.size) : ''} • ${new Date(file.mTime).toLocaleString()}`;
+            
+            details.appendChild(name);
+            details.appendChild(meta);
+            
+            item.appendChild(icon);
+            item.appendChild(details);
+
+            if (file.directory) {
+                item.onclick = () => navigateDirectory(cleanPath(path + '/' + file.name));
+            } else {
+                item.onclick = () => loadFile(cleanPath(path + '/' + file.name));
+                if (file.tooLarge) {
+                    const warning = document.createElement('span');
+                    warning.className = 'ml-2 text-yellow-500 opacity-0 group-hover:opacity-100';
+                    warning.textContent = '⚠️ Large file';
+                    name.appendChild(warning);
+                }
+            }
+
+            fileTree.appendChild(item);
+        });
+
+        currentPath = path;
+        // Path input - show empty for root, otherwise show path without leading slash
+        document.getElementById('path-input').value = path === '/' ? '' : path.substring(1);
+    } catch (error) {
+        console.error(error);
+        errorAlert('Failed to load directory');
+    }
+}
+
+async function loadFile(path) {
+    const editor = document.getElementById('file-content');
+    editor.disabled = true;
+    editor.value = 'Loading...';
+    document.getElementById('save-btn').classList.add('disabled');
+    try {
+        // First check if the file is in the current directory listing
+        const response = await oHttp.get(`/proxy/file/${serverId}/list/${currentPath}`);
+        if (response.response.code !== 200) throw new Error('Failed to check file size');
+        
+        let files = response.response.body.files || response.response.body;
+        if (!Array.isArray(files)) {
+            console.error('Invalid files data:', files);
+            throw new Error('Invalid file data received');
+        }
+        
+        const file = files.find(f => f.name === path.split('/').pop());
+
+        if (!file) {
+            console.error(`Could not find file ${path}`);
+            errorAlert('An unexpected error occured. Check console.');
+            editor.value = 'An unexpected error occured. Check console.';
+            return;
+        }
+        
+        if (file && file.tooLarge) {
+            warningAlert('This file is too large to open in the editor');
+            editor.value = 'File too large. Loading aborted.';
+            return;
+        }
+
+        const fileResponse = await oHttp.get(`/proxy/file/${serverId}/read/${path}`);
+        if (fileResponse.response.code !== 200) throw new Error('Failed to load file');
+        
+        editor.value = fileResponse.response.body.content;
+        editor.disabled = false;
+        document.getElementById('save-btn').classList.remove('disabled');
+        
+        currentFile = path;
+        fileContentModified = false;
+    } catch (error) {
+        console.error(error);
+        errorAlert(`Failed to load file: ${JSON.stringify(error?.connection?.response?.body) || 'Unknown error'}`);
+    }
+}
+
+async function saveFile() {
+    if (!currentFile) return;
+    
+    try {
+        const content = document.getElementById('file-content').value;
+        const response = await oHttp.post(`/proxy/file/${serverId}/edit/${currentFile}`, 
+            JSON.stringify({ content })
+        );
+        
+        if (response.response.code !== 200) throw new Error('Failed to save file');
+        
+        alert('File saved successfully');
+        fileContentModified = false;
+    } catch (error) {
+        console.error(error);
+        errorAlert('Failed to save file');
+    }
+}
+
+async function createFolder() {
+    const name = prompt('Enter folder name:');
+    if (!name) return;
+
+    try {
+        const response = await oHttp.post(`/proxy/file/${serverId}/folder/create`,
+            JSON.stringify({ name, directory: currentPath })
+        );
+        
+        if (response.response.code !== 200) throw new Error('Failed to create folder');
+        
+        loadDirectory(currentPath);
+        alert('Folder created successfully');
+    } catch (error) {
+        console.error(error);
+        errorAlert('Failed to create folder');
+    }
+}
+
+function uploadFile() {
+    document.getElementById('file-input').click();
+}
+
+async function handleFileUpload() {
+    const fileInput = document.getElementById('file-input');
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await oHttp.post(`/proxy/file/${serverId}/upload/${currentPath}`, formData);
+        if (response.response.code !== 200) throw new Error('Failed to upload file');
+        
+        loadDirectory(currentPath);
+        alert('File uploaded successfully');
+    } catch (error) {
+        console.error(error);
+        errorAlert('Failed to upload file');
+    }
+    
+    fileInput.value = '';
+}
+
+function navigatePath() {
+    let path = document.getElementById('path-input').value;
+    // Handle empty input as root
+    if (!path) {
+        path = '/';
+    } else if (!path.startsWith('/')) {
+        // Add leading slash if not present and not root
+        path = '/' + path;
+    }
+    loadDirectory(path);
+}
+
+function navigateDirectory(path) {
+    loadDirectory(path);
+}
+
+// Initialize
+loadDirectory('/');
+document.getElementById('file-content').disabled = true;
+
+// Handle unsaved changes
+window.onbeforeunload = () => {
+    if (fileContentModified) {
+        return 'You have unsaved changes. Are you sure you want to leave?';
+    }
+};
+
+document.getElementById('file-content').addEventListener('input', () => {
+    fileContentModified = true;
+});
+</script>
