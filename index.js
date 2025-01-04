@@ -10,19 +10,19 @@ const app = express();
 const port = 8081;
 
 // Middleware & CORS
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      callback(null, origin); // Reflect the incoming origin
-    },
-    credentials: true, // Allow cookies and credentials from other origins (so you can make your own panel frontend)
-  })
-);
-app.use(express.json());
+app.use(express.raw({type: '*/*', limit: '11mb', extended: true}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.use(
+    cors({
+      origin: (origin, callback) => {
+        callback(null, origin); // Reflect the incoming origin
+      },
+      credentials: true, // Allow cookies and credentials from other origins (so you can make your own panel frontend)
+    })
+  );
 expressWs(app);
 
 // Helper function to check auth
@@ -138,7 +138,7 @@ app.get('/', checkAuth, async (req, res) => {
         const response = await axios.get(`https://api.dev.minehut.com/servers/${minehutId}/all_data`, {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                'accept-language': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                 'x-profile-id': profileId,  // Corrected to use profileId
                 'x-session-id': sessionId
             }
@@ -164,7 +164,7 @@ app.get('/getData', async (req, res) => {
         const response = await axios.get(`https://api.dev.minehut.com/servers/${minehutId}/all_data`, {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                'accept-language': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                 'x-profile-id': profileId,  // Corrected to use profileId
                 'x-session-id': sessionId
             }
@@ -278,29 +278,60 @@ app.use('/proxy/*', async (req, res) => {
     const token = req.cookies.token;
     const sessionId = req.cookies.sessionId;
     const profileId = req.cookies.profile_id;
-
+    
     if (!minehutId || !token || !sessionId || !profileId) {
         return res.status(401).send('Session expired. Please log in.');
     }
 
+    const priorityHeader = req.headers['accept-language'];
+    let headersToForward = {};
+
+    if (priorityHeader) {
+        // Assuming priority header has a list of headers in {"key","value"}:|:|:{"key2","value2"}
+        const headersToInclude = priorityHeader.split(':|:|:').map(header => {
+            const [key, value] = header.split(',').map(part => part.replace(/[{}"]/g, '').trim());
+            return { key, value };
+        });
+
+        // Add the headers to the forward object
+        headersToInclude.forEach(({ key, value }) => {
+            headersToForward[key] = value;
+        });
+    }
+
+    let requestBody = req.body;
+    if (Buffer.isBuffer(requestBody)) {
+        requestBody = requestBody.toString();
+    }
+
+    // Parse the request body if it's JSON
+    if (req.is('json') && requestBody) {
+        try {
+            requestBody = JSON.parse(requestBody);
+        } catch (e) {
+            return res.status(400).send('Invalid JSON in request body:', e);
+        }
+    }
+    
     try {
         const response = await axios({
             method: req.method,
             url: `https://api.dev.minehut.com${req.originalUrl.replace('/proxy', '')}`,
             headers: {
+                ...headersToForward,
+                'Content-Type': req.headers['content-type'] || 'application/json',
                 Authorization: `Bearer ${token}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                 'x-profile-id': profileId,
                 'x-session-id': sessionId 
             },
-            data: req.body // Forward the request body
+            params: req.query,
+            data: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : undefined // Forward the request body
         });
-
-        // Send back the data from the external API if the request is successful
-        res.json(response.data);
+        
+        res.send(response.data);
     } catch (error) {
         if (error.response) {
-            // Handle session expired error by clearing cookies
+            console.log('Response Data:', error.response.data);
             if (error.response.data && error.response.data.expired) {
                 res.clearCookie('minehut_id');
                 res.clearCookie('token');
@@ -308,11 +339,8 @@ app.use('/proxy/*', async (req, res) => {
                 res.clearCookie('profile_id');
                 return res.status(401).send('Session expired. Please log in again.');
             }
-
-            // For all other non-OK responses, send back the response data or error
             return res.status(error.response.status).json(error.response.data);
         } else {
-            // Handle cases where the error doesn't have a response (e.g., network issues)
             return res.status(500).send(error.message || 'An unknown error occurred.');
         }
     }
@@ -325,7 +353,37 @@ app.use('/manager/:id*', async (req, res) => {
     const profileId = req.cookies.profile_id;
 
     if (!minehutId || !token || !sessionId || !profileId) {
-        return res.status(400).send('Session expired. Please log in.');
+        return res.status(401).send('Session expired. Please log in.');
+    }
+
+    const priorityHeader = req.headers['accept-language'];
+    let headersToForward = {};
+
+    if (priorityHeader) {
+        // Assuming priority header has a list of headers in {"key","value"}:|:|:{"key2","value2"}
+        const headersToInclude = priorityHeader.split(':|:|:').map(header => {
+            const [key, value] = header.split(',').map(part => part.replace(/[{}"]/g, '').trim());
+            return { key, value };
+        });
+
+        // Add the headers to the forward object
+        headersToInclude.forEach(({ key, value }) => {
+            headersToForward[key] = value;
+        });
+    }
+
+    let requestBody = req.body;
+    if (Buffer.isBuffer(requestBody)) {
+        requestBody = requestBody.toString();
+    }
+
+    // Parse the request body if it's JSON
+    if (req.is('json') && requestBody) {
+        try {
+            requestBody = JSON.parse(requestBody);
+        } catch (e) {
+            return res.status(400).send('Invalid JSON in request body:', e);
+        }
     }
 
     try {
@@ -333,16 +391,18 @@ app.use('/manager/:id*', async (req, res) => {
             method: req.method,
             url: `https://${req.params.id}.manager.dev.minehut.com${req.originalUrl.replace(`/manager/${req.params.id}`, '')}`,
             headers: {
+                ...headersToForward,
+                'Content-Type': req.headers['content-type'] || 'application/json',
                 Authorization: `Bearer ${token}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                 'x-profile-id': profileId,
                 'x-session-id': sessionId 
             },
-            data: req.body // Forward the request body
+            params: req.query,
+            data: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : undefined // Forward the request body
         });
 
-        // Send back the data from the external API if the request is successful
-        res.json(response.data);
+        // Send back the data from the API if the request is successful
+        res.send(response.data);
     } catch (error) {
         if (error.response) {
             // Handle session expired error by clearing cookies

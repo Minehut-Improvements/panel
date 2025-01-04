@@ -30,10 +30,27 @@
     </div>
 </div>
 
+<div id="upload-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-gray-800 p-6 rounded-lg w-96">
+        <h3 class="text-xl font-bold mb-4">Uploading File</h3>
+        <div id="upload-progress-number-text" class="inset-0 flex items-center justify-center text-white">0/0</div>
+        <div class="relative w-full h-6 bg-gray-700 rounded mb-2">
+            <div id="upload-progress-bar" class="h-full bg-blue-600 rounded" style="width: 0%"></div>
+            <div id="upload-progress-percent-text" class="absolute inset-0 flex items-center justify-center text-white">0%</div>
+        </div>
+        <button id="cancel-upload" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200">Cancel Upload</button>
+    </div>
+</div>
+
 <script>
 let currentPath = '/';
 let currentFile = '';
 let fileContentModified = false;
+const chunkSize = 10 * 1000 * 1000; // 10 MB chunks
+let uploadProgress = new Map();
+let controller = new AbortController();
+let activeUpload = false;
+let uploadCancelled = false;
 
 // Sorts files (duh)
 function sortFiles(files) {
@@ -156,7 +173,7 @@ async function loadDirectory(path = '/') {
         document.getElementById('path-input').value = path === '/' ? '' : path.substring(1);
     } catch (error) {
         console.error(error);
-        errorAlert('Failed to load directory');
+        errorAlert(`Failed to load directory: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
     }
 }
 
@@ -221,7 +238,7 @@ async function saveFile() {
         fileContentModified = false;
     } catch (error) {
         console.error(error);
-        errorAlert('Failed to save file');
+        errorAlert('Failed to save file: ' + error.message);
     }
 }
 
@@ -231,7 +248,10 @@ async function createFolder() {
 
     try {
         const response = await oHttp.post(`/proxy/file/${serverId}/folder/create`,
-            JSON.stringify({ name, directory: currentPath })
+            `{"name":"${name}","directory":"${currentPath}"}`,
+            {
+                'content-type':'application/json'
+            }
         );
         
         if (response.response.code !== 200) throw new Error('Failed to create folder');
@@ -240,7 +260,7 @@ async function createFolder() {
         alert('Folder created successfully');
     } catch (error) {
         console.error(error);
-        errorAlert('Failed to create folder');
+        errorAlert('Failed to create folder: ' + error.message);
     }
 }
 
@@ -253,21 +273,129 @@ async function handleFileUpload() {
     const file = fileInput.files[0];
     if (!file) return;
 
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 2500;
+
+    document.getElementById('upload-modal').classList.remove('hidden');
+    uploadCancelled = false;
+    activeUpload = true;
+
+    async function uploadChunkWithRetry(chunk, chunkNumber, headers) {
+        const form = new FormData();
+        form.append('file', chunk, `${file.name}+${chunkNumber}`);
+        
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            if (uploadCancelled) {
+                activeUpload = false;
+                return;
+            }
+            try {
+                if (uploadCancelled) {
+                    activeUpload = false;
+                    return;
+                }
+                const conn = await oHttp.post(
+                    `/manager/${serverId}/file/upload/${cleanPath(currentPath + '/' + file.name)}`,
+                    form,
+                    { ...headers, 'Upload-Chunk-Number': chunkNumber }
+                );
+                
+                if (conn.response.code === 200) return true;
+                
+                if (attempt < MAX_RETRIES) {
+                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+                }
+            } catch (error) {
+                if (attempt === MAX_RETRIES) throw error;
+                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+            }
+        }
+        throw new Error(`Failed to upload chunk ${chunkNumber} after ${MAX_RETRIES} attempts`);
+    }
+
     try {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        const response = await oHttp.post(`/proxy/file/${serverId}/upload/${currentPath}`, formData);
-        if (response.response.code !== 200) throw new Error('Failed to upload file');
-        
-        loadDirectory(currentPath);
-        alert('File uploaded successfully');
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        const uploadId = crypto.randomUUID();
+        let chunkCount = 0;
+
+        const headers = {
+            'Upload-Id': uploadId,
+            'Upload-Chunk-Total': totalChunks
+        };
+
+        while (chunkCount < totalChunks) {
+            const currentBatch = [];
+            const batchSize = Math.min(1, totalChunks - chunkCount);
+
+            for (let i = 0; i < batchSize; i++) {
+                if (uploadCancelled) {
+                    activeUpload = false;
+                    return;
+                }
+                const chunk = await createChunk(chunkCount + i, file, totalChunks, chunkSize);
+                const uploadPromise = uploadChunkWithRetry(chunk, chunkCount + i, headers);
+                currentBatch.push(uploadPromise);
+            }
+
+            if (uploadCancelled) {
+                    activeUpload = false;
+                    return;
+            }
+
+            await Promise.all(currentBatch);
+            chunkCount += batchSize;
+
+            updateUploadProgress(chunkCount, totalChunks);
+        }
+
+        if (!uploadCancelled) {
+            await loadDirectory(currentPath);
+            alert('File uploaded successfully');
+        }
+        uploadProgress = new Map();
     } catch (error) {
         console.error(error);
         errorAlert('Failed to upload file');
+        uploadProgress = new Map();
+    } finally {
+        document.getElementById('upload-modal').classList.add('hidden');
+        uploadProgress = new Map();
+        activeUpload = false;
+        fileInput.value = '';
     }
-    
+
     fileInput.value = '';
+}
+
+// Add event listener for cancel button
+document.getElementById('cancel-upload').addEventListener('click', () => {
+    if (activeUpload) {
+        uploadCancelled = true;
+        controller.abort();
+        controller = new AbortController();
+    }
+});
+
+function createChunk(chunkCount, file, totalChunks, chunkSize) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        const start = chunkSize * chunkCount;
+        const end = chunkCount + 1 === totalChunks ? file.size : start + chunkSize;
+
+        reader.onload = () => {
+            const chunk = new Blob([reader.result], { type: 'application/octet-stream' });
+            resolve(chunk);
+        };
+
+        reader.readAsArrayBuffer(file.slice(start, end));
+    });
+}
+
+function updateUploadProgress(chunkCount, totalChunks) {
+    const percent = Math.round((chunkCount / totalChunks) * 100);
+    document.getElementById('upload-progress-bar').style.width = `${percent}%`;
+    document.getElementById('upload-progress-percent-text').textContent = `${percent}%`;
+    document.getElementById('upload-progress-number-text').textContent = `${chunkCount} / ${totalChunks}`;
 }
 
 function navigatePath() {
