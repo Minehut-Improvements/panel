@@ -69,7 +69,7 @@ function addPort() {
 
 async function fetchPorts() {
     try {
-        const conn = await oHttp.get(`/proxy/v1/server/${serverId}/port`);
+        const conn = await oHttp.get(`/proxy/v1/server/${serverId}/port`); // Port info is not provided by getData, so this is required.
         return conn.response.body;
     } catch (error) {
         errorAlert(`Failed to get ports: ${error.connection?.response?.body || 'Unknown error'}`)
@@ -114,19 +114,50 @@ async function loadPorts() {
             numports += 1;
             const portDiv = document.createElement('div');
             portDiv.className = 'port flex items-center justify-between bg-gray-800 p-4 rounded-lg border border-gray-600';
-            portDiv.textContent = `Internal Port: ${port.in_port}, External Port: ${port.ex_port}, IP: ${port.ip.ip}`;
+            
+            const portInfo = document.createElement('div');
+            portInfo.className = 'flex items-center gap-4';
+            
+            const inPortInput = document.createElement('input');
+            inPortInput.type = 'number';
+            inPortInput.value = port.in_port;
+            inPortInput.min = 1024;
+            inPortInput.max = 65535;
+            inPortInput.className = 'w-24 bg-gray-700 text-white px-2 py-1 rounded border border-gray-500';
+            
+            const portText = document.createElement('span');
+            portText.className = 'text-gray-200';
+            portText.textContent = `, External Port: ${port.ex_port}, IP: ${port.ip.ip}`;
+            
+            portInfo.appendChild(inPortInput);
+            portInfo.appendChild(portText);
+            
+            const buttonGroup = document.createElement('div');
+            buttonGroup.className = 'flex gap-2';
+
+            const updateButton = document.createElement('button');
+            updateButton.className = 'bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md transition-colors duration-200';
+            updateButton.textContent = 'Update';
+            updateButton.onclick = () => updateServerPort(port.id, parseInt(inPortInput.value, 10));
 
             const deleteButton = document.createElement('button');
             deleteButton.className = 'bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md transition-colors duration-200';
             deleteButton.textContent = 'Delete';
             deleteButton.onclick = () => deletePort(port.id);
 
-            portDiv.appendChild(deleteButton);
+            buttonGroup.appendChild(updateButton);
+            buttonGroup.appendChild(deleteButton);
+
+            portDiv.appendChild(portInfo);
+            portDiv.appendChild(buttonGroup);
             root.appendChild(portDiv);
         });
     }
 
     if (numports < MAX_PORTS) {
+        const inputContainer = document.createElement('div');
+        inputContainer.className = 'flex gap-3';
+        
         const newportInput = document.createElement('input');
         newportInput.type = 'number';
         newportInput.id = 'new-port-input';
@@ -138,13 +169,11 @@ async function loadPorts() {
         const addPortButton = document.createElement('button');
         addPortButton.textContent = 'Add Port';
         addPortButton.className = 'bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors duration-200';
-        addPortButton.onclick = () => {
-            const portValue = parseInt(newportInput.value, 10);
-            if (!isNaN(portValue)) createPort(portValue);
-        };
+        addPortButton.onclick = createPort;
 
-        root.appendChild(newportInput);
-        root.appendChild(addPortButton);
+        inputContainer.appendChild(newportInput);
+        inputContainer.appendChild(addPortButton);
+        root.appendChild(inputContainer);
     }
 }
 
@@ -157,8 +186,7 @@ function updateServerPort(portId, in_port) {
             in_port: in_port
         });
     
-        const conn = oHttp.patch(url, payload);
-        loadPorts();
+        oHttp.patch(url, payload).then(loadPorts());
     }
     catch (error) {
         errorAlert(`Failed to update port: ${error.connection?.response?.body || 'Unknown error'}`)

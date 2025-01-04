@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="min-h-screen bg-cover bg-fixed" style="background-image: url('https://api.oddbyte.dev/img/BrightMoon.jpg');">
+<html class="min-h-screen bg-cover bg-fixed" style="background-image: url('https://panel.oddbyte.dev/img/BrightMoon.jpg');">
 <head>
     <title>Server Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
@@ -89,8 +89,8 @@
                         statusClass = 'text-red-400 font-semibold';
                         break;
                     default:
-                        statusText = 'Unknown';
-                        statusClass = 'text-red-400 font-semibold';
+                        statusText = server.status;
+                        statusClass = 'text-gray-500 font-semibold';
                         break;
                 }
             }
@@ -141,7 +141,7 @@
         }
 
         function openServer(id) {
-            window.open(`https://api.oddbyte.dev/server/${id}`, '_blank');
+            window.open(`https://panel.oddbyte.dev/server/${id}`);
         }
 
         function showCreateServerPopup() {

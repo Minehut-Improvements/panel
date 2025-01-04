@@ -74,13 +74,13 @@ function appendConsoleMessage(msg, isCmdran, isErr = false) {
     const consoleDiv = document.getElementById('console');
     const msgDiv = document.createElement('div');
     if (isCmdran) {
-        msgDiv.textContent = '> ' + msg.data.msg;
-        msgDiv.style.color = 'yellow';
+        msgDiv.innerText = '> ' + msg.data.msg;
+        msgDiv.style.color = 'yellow'; // Make commands you run yellow, with a prefix of >
     } else if (isErr) {
-        msgDiv.textContent = msg.data.msg;
-        msgDiv.style.color = 'red';
+        msgDiv.innerText = msg.data.msg;
+        msgDiv.style.color = 'red'; // Make errors red to stand out
     } else {
-        msgDiv.textContent = msg.data.msg;
+        msgDiv.innerText = msg.data.msg;
     }
     consoleDiv.appendChild(msgDiv);
     consoleDiv.scrollTop = consoleDiv.scrollHeight;
@@ -88,6 +88,7 @@ function appendConsoleMessage(msg, isCmdran, isErr = false) {
 
 function sendCommand(command) {
     if (!command || !isConnected) {
+        if (!isConnected) warningAlert('Console not initialized yet, please try again.'); // This should never execute in normal usage, as the middleware websocket handler will connect before minehut's websocket does. isConnected should only be false if the person is trying to use console as soon as they open the page, before the websocket had a chance to initialize.
         return;
     }
 

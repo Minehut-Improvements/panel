@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="h-full bg-cover bg-fixed" style="background-image: url('https://api.oddbyte.dev/img/BrightMoon.jpg');">
+<html class="h-full bg-cover bg-fixed" style="background-image: url('https://panel.oddbyte.dev/img/BrightMoon.jpg');">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -72,6 +72,7 @@
             </div>
         </div>
 
+        <!-- Alert container -->
         <div id="alert-container" class="fixed inset-0 flex items-center justify-center hidden z-50">
             <div class="fixed inset-0 bg-[rgba(17,25,40,0.75)]"></div>
         
@@ -93,6 +94,7 @@
             </div>
         </div>
 
+        <!-- Base script -->
         <script>
 // oHttp
 const oHttp = {
@@ -154,6 +156,10 @@ const oHttp = {
 
     put: function(url, body) {
         return this.makeRequest(url, 'PUT', body);
+    },
+
+    patch: function(url, body) {
+        return this.makeRequest(url, 'PATCH', body);
     },
 
     delete: function(url) {
@@ -372,7 +378,7 @@ async function stopServer() {
 
 async function restartServer() {
     try {
-        const conn = oHttp.post(`/proxy/server/${serverId}/restart`);
+        const conn = await oHttp.post(`/proxy/server/${serverId}/restart`);
         if(conn.response.code != 200) {
             errorAlert(`Failed to restart server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to restart server:', conn);
@@ -481,9 +487,9 @@ window.warningAlert = (message) => showAlert(message, 'warning');
 // Export variables for global access
 window.serverData = serverData;
 window.serverId = serverId;
-
         </script>
 
+        <!-- Dynamic content-->
         <div id="dynamic_content" class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8"><%- include(page) %></div>
     </div>
     <div hidden class="cursor"></div>

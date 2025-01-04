@@ -40,7 +40,7 @@ const checkAuth = (req, res, next) => {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background: url('https://api.oddbyte.dev/img/BrightMoon.jpg') no-repeat center center fixed;
+            background: url('https://panel.oddbyte.dev/img/BrightMoon.jpg') no-repeat center center fixed;
             background-size: cover;
             color: #fff;
             min-height: 100vh;

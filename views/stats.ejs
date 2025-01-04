@@ -40,7 +40,7 @@ const advancedMode = document.getElementById('advanced-mode');
 const detailElements = document.querySelectorAll('[id$="-details"]');
 
 function updateMetrics() {
-    fetch(`/proxy/metrics/${serverId}`)
+    fetch(`/proxy/metrics/${serverId}`) // Info is not provided by getData, so this is required.
         .then(response => response.json())
         .then(data => {
             // CPU
