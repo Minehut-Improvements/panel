@@ -148,6 +148,24 @@ async function loadPorts() {
     }
 }
 
+function updateServerPort(portId, in_port) {
+    try {
+        const url = `/proxy/v1/server/${serverId}/port`;
+        const payload = JSON.stringify({
+            id: portId,
+            serverId: serverId,
+            in_port: in_port
+        });
+    
+        const conn = oHttp.patch(url, payload);
+        loadPorts();
+    }
+    catch (error) {
+        errorAlert(`Failed to update port: ${error.connection?.response?.body || 'Unknown error'}`)
+        console.error('Failed to update port:', error);
+    }
+}
+
 loadPorts();
 
 let serverProperties = {};

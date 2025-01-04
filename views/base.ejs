@@ -309,6 +309,7 @@ async function updateServerInfo() {
         const server = conn.response.body.find(s => s._id === serverId);
         if (!server) {
             errorAlert('Failed to find server!');
+            window.location.href = "/";
             return;
         };
         
