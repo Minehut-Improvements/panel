@@ -8,9 +8,12 @@
     <script src="https://oddbyte.dev/js/cursor.js"></script>
     <link rel="stylesheet" href="https://oddbyte.dev/styles/cursor.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/filesize/9.0.11/filesize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <style>
         .disabled { opacity: 0.5; pointer-events: none; }
         .overflow-wrap-anywhere { overflow-wrap: anywhere; }
+        input[type="checkbox"] { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+        input[type="checkbox"]:checked { background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e"); }
     </style>
 </head>
 <body class="h-full flex flex-col text-white">
@@ -90,6 +93,47 @@
         
                 <div class="flex justify-end">
                     <button onclick="closeAlert()" class="px-6 py-2.5 rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:bg-opacity-80" id="alert-button">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prompt container -->
+        <div id="custom-prompt" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg shadow-xl w-96 overflow-hidden">
+                <div class="p-4 border-b border-gray-700">
+                    <h3 id="prompt-title" class="text-lg font-semibold text-white"></h3>
+                </div>
+                <div class="p-4">
+                    <input type="text" id="prompt-input" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="p-4 bg-gray-900 flex justify-end space-x-2">
+                    <button id="prompt-cancel" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">Cancel</button>
+                    <button id="prompt-confirm" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm container -->
+        <div id="confirm-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-[rgba(17,25,40,0.95)] border border-[rgba(255,255,255,0.125)] rounded-xl p-8 max-w-md mx-4 relative z-10">
+                <div class="flex items-start mb-6">
+                    <div class="mr-4 flex-shrink-0">
+                        <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold mb-2 text-white">Confirmation</h3>
+                        <p id="confirm-message" class="overflow-wrap-anywhere break-words text-gray-300"></p>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button id="confirm-cancel" class="px-6 py-2.5 bg-gray-500 bg-opacity-50 text-gray-200 rounded-lg font-medium transition-all duration-200 hover:scale-105">
+                        Cancel
+                    </button>
+                    <button id="confirm-ok" class="px-6 py-2.5 bg-yellow-500 bg-opacity-50 text-yellow-200 rounded-lg font-medium transition-all duration-200 hover:scale-105">
                         OK
                     </button>
                 </div>
@@ -293,6 +337,73 @@ function closeAlert() {
   }, 200);
 }
 
+function showPrompt(title, defaultValue = '') {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('custom-prompt');
+        const titleEl = document.getElementById('prompt-title');
+        const input = document.getElementById('prompt-input');
+        const confirmBtn = document.getElementById('prompt-confirm');
+        const cancelBtn = document.getElementById('prompt-cancel');
+
+        titleEl.textContent = title;
+        input.value = defaultValue;
+        modal.classList.remove('hidden');
+        input.focus();
+
+        function close(value) {
+            modal.classList.add('hidden');
+            resolve(value);
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter') {
+                close(input.value);
+            } else if (e.key === 'Escape') {
+                close(null);
+            }
+        }
+
+        input.onkeydown = handleKeyDown;
+        confirmBtn.onclick = () => close(input.value);
+        cancelBtn.onclick = () => close(null);
+    });
+}
+
+function showConfirm(message) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirm-dialog');
+        const messageEl = document.getElementById('confirm-message');
+        const confirmBtn = document.getElementById('confirm-ok');
+        const cancelBtn = document.getElementById('confirm-cancel');
+
+        messageEl.textContent = message;
+        modal.classList.remove('hidden');
+
+        function handleResult(result) {
+            modal.classList.add('hidden');
+            resolve(result);
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter') {
+                handleResult(true);
+            } else if (e.key === 'Escape') {
+                handleResult(false);
+            }
+        }
+
+        document.addEventListener('keydown', handleKeyDown);
+        confirmBtn.onclick = () => handleResult(true);
+        cancelBtn.onclick = () => handleResult(false);
+
+        // Cleanup
+        const cleanup = () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+        modal.addEventListener('transitionend', cleanup, { once: true });
+    });
+}
+
 // Info card
 function updateDOM() {
     const server = serverData;
@@ -355,7 +466,7 @@ async function updateServerInfo() {
         serverData = { ...server };
         updateDOM();
     } catch (error) {
-        errorAlert(`Failed to fetch server data: ${JSON.stringify(error?.connection?.response?.body) || 'Unknown error'}`)
+        errorAlert(`Failed to fetch server data: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`)
         console.error('Failed to fetch server data:', error);
     }
 }
@@ -372,7 +483,7 @@ async function startServer() {
 
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to start server: ${JSON.stringify(error?.connection?.response?.body) || 'Unknown error'}`);
+        errorAlert(`Failed to start server: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
         console.error('Failed to start server:', error)
     }
 }
@@ -388,7 +499,7 @@ async function bootServer() {
 
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to boot server: ${JSON.stringify(error?.connection?.response?.body) || 'Unknown error'}`);
+        errorAlert(`Failed to boot server: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
         console.error('Failed to boot server:', error);
     }
 }
@@ -404,7 +515,7 @@ async function stopServer() {
 
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to stop server: ${JSON.stringify(error?.connection?.response?.body) || 'Unknown error'}`);
+        errorAlert(`Failed to stop server: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
         console.error('Failed to stop server:', error);
     }
 }
@@ -420,7 +531,7 @@ async function restartServer() {
 
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to restart server: ${JSON.stringify(error?.connection?.response?.body) || 'Unknown error'}`);
+        errorAlert(`Failed to restart server: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
         console.error('Failed to restart server:', error);
     }
 }
@@ -436,7 +547,7 @@ async function hibernateServer() {
 
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to hibernate server: ${JSON.stringify(error?.connection?.response?.body) || 'Unknown error'}`);
+        errorAlert(`Failed to hibernate server: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
         console.error('Failed to hibernate server:', error);
     }
 }
@@ -453,7 +564,7 @@ async function updateServer() {
         resetProps(true);
         alert('Successfully updated the server!');
     } catch (error) {
-        errorAlert(`Failed to set server version: ${JSON.stringify(error?.connection?.response?.body) || 'Unknown error'}`);
+        errorAlert(`Failed to set server version: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
         console.error('Failed to set server version:', error);
     }
 }
@@ -469,7 +580,7 @@ async function upgradeServer() {
 
         await updateServerInfo();
     } catch (error) {
-        errorAlert(`Failed to upgrade server: ${JSON.stringify(error?.connection?.response?.body) || 'Unknown error'}`);
+        errorAlert(`Failed to upgrade server: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
         console.error('Failed to upgrade server:', error);
     }
 }
@@ -486,7 +597,7 @@ async function resetProps(hideAlert = false) {
         await restartServer();
         if (!hideAlert) alert('Successfully reset server.properties!');
     } catch (error) {
-        errorAlert(`Failed to reset server properties: ${JSON.stringify(error?.connection?.response?.body) || 'Unknown error'}`);
+        errorAlert(`Failed to reset server properties: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
         console.error('Failed to reset server properties:', error);
     }
 }
@@ -516,6 +627,12 @@ window.oHttp = oHttp;
 window.alert = showAlert;
 window.errorAlert = (message) => showAlert(message, 'error');
 window.warningAlert = (message) => showAlert(message, 'warning');
+
+// Replace prompt with our prompt system
+window.prompt = showPrompt;
+
+// Replace confirm with our confirm system
+window.confirm = showConfirm;
 
 // Export variables for global access
 window.serverData = serverData;

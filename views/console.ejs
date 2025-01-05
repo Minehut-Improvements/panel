@@ -89,7 +89,7 @@ function appendConsoleMessage(msg, isCmdran, isErr = false) {
 function sendCommand(command) {
     if (!command || !isConnected) {
         if (!isConnected) warningAlert('Console not initialized yet, please try again.'); // This should never execute in normal usage, as the middleware websocket handler will connect before minehut's websocket does. isConnected should only be false if the person is trying to use console as soon as they open the page, before the websocket had a chance to initialize.
-        // TODO: add onto the !isConnected to try the console command send POST endpoint.
+        // TODO: add subuser support here (some users might not have access to console, and therefore this could trigger)
         return;
     }
 

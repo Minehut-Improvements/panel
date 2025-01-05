@@ -172,6 +172,7 @@ app.get('/getData', async (req, res) => {
 
         res.json(response.data);
     } catch (error) {
+        console.log(error);
         if (error.response && error.response.data && error.response.data.expired) {
             // Clear cookies and respond to the frontend
             res.clearCookie('minehut_id');
@@ -331,7 +332,6 @@ app.use('/proxy/*', async (req, res) => {
         res.send(response.data);
     } catch (error) {
         if (error.response) {
-            console.log('Response Data:', error.response.data);
             if (error.response.data && error.response.data.expired) {
                 res.clearCookie('minehut_id');
                 res.clearCookie('token');

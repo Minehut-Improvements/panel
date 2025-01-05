@@ -35,8 +35,6 @@ We will allow you to use credits that you already have (buying ranks, server pla
 
 # TODO:
 ### In order of priority:
-- Make the file manager.
-- Add force hibernation button.
 - Add MOTD changer.
 - Show SFTP info.
 - Add better version switcher.

@@ -355,7 +355,7 @@ async function submitProperties(e) {
     });
 
     try {
-        await oHttp.other({
+        await other({
             url: `/proxy/server/${serverId}/${editMode === 'edit' ? 'edit' : 'patch'}_server_properties`,
             type: editMode === 'edit' ? 'POST' : 'PATCH',
             data: { serverProperties: properties }
