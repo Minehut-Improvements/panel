@@ -132,6 +132,9 @@ function sortFiles(files) {
 
 // Path utilities
 function cleanPath(path) {
+    if (typeof path !== 'string') {
+        path = String(path);
+    }
     path = path.replace(/\/+/g, '/');
     if (path !== '/' && path.endsWith('/')) {
         path = path.slice(0, -1);
@@ -704,16 +707,17 @@ async function deleteSelected() {
     
     if (!await confirm(`Delete ${selectedFiles.size} selected items?`)) return;
     
-    for (const fileName of selectedFiles) {
-        try {
-            const response = await oHttp.delete(
-                `/proxy/file/${serverId}/delete/${cleanPath(currentPath + '/' + fileName)}`
-            );
-            if (response.response.code !== 200) throw new Error('Delete failed');
-        } catch (error) {
-            console.error(error);
-            errorAlert(`Failed to delete ${fileName}: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
-        }
+    try {
+        const response = await oHttp.post(
+            `/proxy/file/${serverId}/delete`,
+            JSON.stringify({
+                files: [selectedFiles]
+            })
+        );
+        if (response.response.code !== 200) throw new Error('Delete failed');
+    } catch (error) {
+        console.error(error);
+        errorAlert(`Failed to delete ${fileName}: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
     }
     
     await loadDirectory(currentPath);
@@ -726,13 +730,13 @@ async function renameSelected() {
     }
     
     const oldName = Array.from(selectedFiles)[0];
-    const newName = prompt('Enter new name:', oldName);
+    const newName = await prompt('Enter new name:', oldName);
     if (!newName) return;
     
     try {
         const response = await oHttp.post(
             `/proxy/file/${serverId}/rename/${currentPath}`,
-            { name: cleanPath(currentPath + '/' + newName) },
+            JSON.stringify({ name: cleanPath(currentPath + '/' + newName) }),
             { 'content-type': 'application/json' }
         );
         
@@ -744,136 +748,103 @@ async function renameSelected() {
     }
 }
 
-async function moveSelected() {
-    if (selectedFiles.size === 0) return;
-    
-    const targetPath = prompt('Enter destination path:', currentPath);
-    if (!targetPath) return;
-    
-    const cleanTargetPath = cleanPath(targetPath);
-    
-    // Check if any selected items would be moved to their current location
-    const samePathItems = Array.from(selectedFiles).filter(fileName => 
-        isSamePath(cleanPath(currentPath + '/' + fileName), cleanPath(targetPath + '/' + fileName))
-    );
-    
-    if (samePathItems.length > 0) {
-        errorAlert(`Cannot move items to their current location: ${samePathItems.join(', ')}`);
-        return;
-    }
-    
-    // Check for moving folder into itself
-    const selectedPaths = Array.from(selectedFiles).map(f => cleanPath(currentPath + '/' + f));
-    const invalidMoves = selectedPaths.filter(path => 
-        isSubPath(path, cleanTargetPath) || isSamePath(path, cleanTargetPath)
-    );
-    
-    if (invalidMoves.length > 0) {
-        errorAlert('Cannot move a folder into itself or its subfolder');
-        return;
-    }
-    
-    // Confirm move operation
-    const confirmMsg = selectedFiles.size === 1 
-        ? `Move "${Array.from(selectedFiles)[0]}" to "${cleanTargetPath}"?`
-        : `Move ${selectedFiles.size} items to "${cleanTargetPath}"?`;
-        
-    if (!await confirm(confirmMsg)) return;
-    
-    // Perform moves
-    for (const fileName of selectedFiles) {
-        try {
-            const response = await oHttp.post(
-                `/proxy/file/${serverId}/move`,
-                { source: cleanPath(currentPath + '/' + fileName), destination: cleanPath(targetPath + '/' + fileName) },
-                { 'content-type': 'application/json' }
-            );
-            
-            if (response.response.code !== 200) throw new Error('Move failed');
-        } catch (error) {
-            console.error(error);
-            errorAlert(`Failed to move ${fileName}: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
-        }
-    }
-    
-    await loadDirectory(currentPath);
-}
-
 async function moveFile(fileName, targetPath) {
     const sourcePath = cleanPath(currentPath + '/' + fileName);
-    const destPath = cleanPath(targetPath + '/' + fileName);
+    const destPath = cleanPath(targetPath);
     
-    // Check if moving to same location
     if (isSamePath(sourcePath, destPath)) {
         warningAlert('Cannot move file to its current location');
-        return;
+        return false;
     }
     
-    // Check for moving folder into itself
     if (isSubPath(sourcePath, targetPath) || isSamePath(sourcePath, targetPath)) {
         warningAlert('Cannot move a folder into itself or its subfolder');
-        return;
+        return false;
     }
-    
-    if (!await confirm(`Move "${fileName}" to "${targetPath}"?`)) return;
     
     try {
         const response = await oHttp.post(
             `/proxy/file/${serverId}/move`,
-            { source: sourcePath, destination: destPath },
+            JSON.stringify({
+                files: [sourcePath],
+                movePath: destPath,
+                overwrite: true
+            }),
             { 'content-type': 'application/json' }
         );
         
         if (response.response.code !== 200) throw new Error('Move failed');
+        return true;
     } catch (error) {
         console.error(error);
         errorAlert(`Failed to move ${fileName}: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
+        return false;
+    }
+}
+
+async function copyFile(fileName, targetPath) {
+    const sourcePath = cleanPath(currentPath + '/' + fileName);
+    const destPath = cleanPath(targetPath);
+    
+    if (isSamePath(sourcePath, destPath)) {
+        warningAlert('Cannot copy file to its current location');
+        return false;
+    }
+    
+    try {
+        const response = await oHttp.post(
+            `/proxy/file/${serverId}/copy`,
+            JSON.stringify({
+                files: [sourcePath],
+                copyPath: destPath,
+                overwrite: true
+            }),
+            { 'content-type': 'application/json' }
+        );
+        
+        if (response.response.code !== 200) throw new Error('Copy failed');
+        return true;
+    } catch (error) {
+        console.error(error);
+        errorAlert(`Failed to copy ${fileName}: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
+        return false;
+    }
+}
+
+async function moveSelected() {
+    if (selectedFiles.size === 0) return;
+    
+    const targetPath = await prompt('Enter destination path:', currentPath);
+    if (!targetPath) return;
+    
+    let success = true;
+    for (const fileName of selectedFiles) {
+        if (!(await moveFile(fileName, targetPath))) {
+            success = false;
+        }
+    }
+    
+    if (success) {
+        await loadDirectory(currentPath);
     }
 }
 
 async function copySelected() {
     if (selectedFiles.size === 0) return;
     
-    const targetPath = prompt('Enter destination path:', currentPath);
+    const targetPath = await prompt('Enter destination path:', currentPath);
     if (!targetPath) return;
     
-    const files = Array.from(selectedFiles).map(file => 
-        cleanPath(currentPath + '/' + file)
-    );
-    
-    // Check if any selected items would be copied to their current location
-    const samePathItems = Array.from(selectedFiles).filter(fileName => 
-        isSamePath(cleanPath(currentPath + '/' + fileName), cleanPath(targetPath + '/' + fileName))
-    );
-    
-    if (samePathItems.length > 0) {
-        errorAlert(`Cannot copy items to their current location: ${samePathItems.join(', ')}`);
-        return;
-    }
-    
-    // Confirm copy operation
-    const confirmMsg = selectedFiles.size === 1 
-        ? `Copy "${Array.from(selectedFiles)[0]}" to "${cleanTargetPath}"?`
-        : `Copy ${selectedFiles.size} items to "${cleanTargetPath}"?`;
-        
-    if (!await confirm(confirmMsg)) return;
-    
+    let success = true;
     for (const fileName of selectedFiles) {
-        try {
-            const response = await oHttp.post(
-                `/proxy/file/${serverId}/copy`,
-                { files, copyPath: cleanPath(targetPath) },
-                { 'content-type': 'application/json' }
-            );
-            
-            if (response.response.code !== 200) throw new Error('Copy failed');
-        } catch (error) {
-            console.error(error);
-            errorAlert(`Failed to copy ${fileName}: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
+        if (!(await copyFile(fileName, targetPath))) {
+            success = false;
         }
     }
     
-    await loadDirectory(currentPath);
+    if (success) {
+        await loadDirectory(currentPath);
+    }
 }
 
 async function unzipSelected() {

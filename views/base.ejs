@@ -357,7 +357,7 @@ function showPrompt(title, defaultValue = '') {
 
         function handleKeyDown(e) {
             if (e.key === 'Enter') {
-                close(input.value);
+                close(input.value.toString());
             } else if (e.key === 'Escape') {
                 close(null);
             }

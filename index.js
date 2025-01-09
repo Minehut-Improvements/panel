@@ -287,14 +287,11 @@ app.use('/proxy/*', async (req, res) => {
     const priorityHeader = req.headers['accept-language'];
     let headersToForward = {};
 
-    if (priorityHeader) {
-        // Assuming priority header has a list of headers in {"key","value"}:|:|:{"key2","value2"}
+    if (priorityHeader && priorityHeader.includes(':|:|:')) {
         const headersToInclude = priorityHeader.split(':|:|:').map(header => {
             const [key, value] = header.split(',').map(part => part.replace(/[{}"]/g, '').trim());
             return { key, value };
         });
-
-        // Add the headers to the forward object
         headersToInclude.forEach(({ key, value }) => {
             headersToForward[key] = value;
         });
@@ -305,12 +302,11 @@ app.use('/proxy/*', async (req, res) => {
         requestBody = requestBody.toString();
     }
 
-    // Parse the request body if it's JSON
     if (req.is('json') && requestBody) {
         try {
             requestBody = JSON.parse(requestBody);
         } catch (e) {
-            return res.status(400).send('Invalid JSON in request body:', e);
+            return res.status(400).json({ error: 'Invalid JSON in request body', details: e.message });
         }
     }
     
@@ -326,23 +322,22 @@ app.use('/proxy/*', async (req, res) => {
                 'x-session-id': sessionId 
             },
             params: req.query,
-            data: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : undefined // Forward the request body
+            data: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : undefined
         });
         
-        res.send(response.data);
+        res.status(response.status).send(response.data);
     } catch (error) {
         if (error.response) {
-            if (error.response.data && error.response.data.expired) {
+            if (error.response.data?.expired) {
                 res.clearCookie('minehut_id');
                 res.clearCookie('token');
                 res.clearCookie('sessionId');
                 res.clearCookie('profile_id');
-                return res.status(401).send('Session expired. Please log in again.');
+                return res.status(401).json({ error: 'Session expired. Please log in again.' });
             }
             return res.status(error.response.status).json(error.response.data);
-        } else {
-            return res.status(500).send(error.message || 'An unknown error occurred.');
         }
+        return res.status(500).json({ error: error.message || 'An unknown error occurred' });
     }
 });
 
@@ -353,20 +348,17 @@ app.use('/manager/:id*', async (req, res) => {
     const profileId = req.cookies.profile_id;
 
     if (!minehutId || !token || !sessionId || !profileId) {
-        return res.status(401).send('Session expired. Please log in.');
+        return res.status(401).json({ error: 'Session expired. Please log in.' });
     }
 
     const priorityHeader = req.headers['accept-language'];
     let headersToForward = {};
 
-    if (priorityHeader) {
-        // Assuming priority header has a list of headers in {"key","value"}:|:|:{"key2","value2"}
+    if (priorityHeader && priorityHeader.includes(':|:|:')) {
         const headersToInclude = priorityHeader.split(':|:|:').map(header => {
             const [key, value] = header.split(',').map(part => part.replace(/[{}"]/g, '').trim());
             return { key, value };
         });
-
-        // Add the headers to the forward object
         headersToInclude.forEach(({ key, value }) => {
             headersToForward[key] = value;
         });
@@ -377,12 +369,11 @@ app.use('/manager/:id*', async (req, res) => {
         requestBody = requestBody.toString();
     }
 
-    // Parse the request body if it's JSON
     if (req.is('json') && requestBody) {
         try {
             requestBody = JSON.parse(requestBody);
         } catch (e) {
-            return res.status(400).send('Invalid JSON in request body:', e);
+            return res.status(400).json({ error: 'Invalid JSON in request body', details: e.message });
         }
     }
 
@@ -398,28 +389,22 @@ app.use('/manager/:id*', async (req, res) => {
                 'x-session-id': sessionId 
             },
             params: req.query,
-            data: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : undefined // Forward the request body
+            data: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : undefined
         });
 
-        // Send back the data from the API if the request is successful
-        res.send(response.data);
+        return res.status(response.status).json(response.data);
     } catch (error) {
-        if (error.response) {
-            // Handle session expired error by clearing cookies
-            if (error.response.data && error.response.data.expired) {
-                res.clearCookie('minehut_id');
-                res.clearCookie('token');
-                res.clearCookie('sessionId');
-                res.clearCookie('profile_id');
-                return res.status(401).send('Session expired. Please log in again.');
-            }
-
-            // For all other non-OK responses, send back the response data or error
-            return res.status(error.response.status).json(error.response.data);
-        } else {
-            // Handle cases where the error doesn't have a response (e.g., network issues)
-            return res.status(500).send(error.message || 'An unknown error occurred.');
+        if (error.response?.data?.expired) {
+            res.clearCookie('minehut_id');
+            res.clearCookie('token');
+            res.clearCookie('sessionId');
+            res.clearCookie('profile_id');
+            return res.status(401).json({ error: 'Session expired. Please log in again.' });
         }
+        if (error.response) {
+            return res.status(error.response.status).json(error.response.data);
+        }
+        return res.status(500).json({ error: error.message || 'An unknown error occurred' });
     }
 });
 
