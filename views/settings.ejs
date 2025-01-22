@@ -40,6 +40,16 @@
 // Variables
 const MAX_PORTS = 2; // Seems to be the maximum amount of ports any server can have
 
+function initializeProperties() {
+    const form = document.getElementById('properties-form');
+    if (!form) return;
+
+    eventSystem.on('propertiesUpdate', (properties) => {
+        serverProperties = properties;
+        renderPropertiesForm();
+    });
+}
+
 function toggleNewPortMenu() {
     const menu = document.getElementById('new-port-menu');
     menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
@@ -198,30 +208,6 @@ loadPorts();
 
 let serverProperties = {};
 
-async function loadProperties() {
-    try {
-        const connection = await oHttp.get(`/proxy/file/${serverId}/read/server.properties`);
-        const content = connection.response.body.content;
-
-        serverProperties = Object.fromEntries(
-            content.split('\n')
-                .filter(line => line && !line.startsWith('#'))
-                .map(line => {
-                    const [key, value] = line.split('=').map(part => part.trim());
-                    return [key, isNaN(value) ? 
-                        value === 'true' ? true : 
-                        value === 'false' ? false : 
-                        value : Number(value)];
-                })
-        );
-
-        renderPropertiesForm();
-    } catch (error) {
-        errorAlert(`Failed to fetch server.properties: ${error.connection?.response?.body || 'Unknown error'}`)
-        console.error('Failed to fetch server.properties:', error);
-    }
-}
-
 function renderPropertiesForm() {
     const form = document.getElementById('properties-form');
     const editMode = document.getElementById('edit-mode').value;
@@ -257,7 +243,7 @@ function createFieldHTML(field) {
                 <span class="text-white">${label}</span>
                 <div class="relative">
                     <input type="checkbox" name="${field.name}" 
-                        ${serverProperties[field.name] ? 'checked' : ''}
+                        ${serverData?.server_properties[field.name] ? 'checked' : ''}
                         class="peer sr-only">
                     <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-500"></div>
                     <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 peer-checked:translate-x-5"></div>
@@ -276,7 +262,7 @@ function createFieldHTML(field) {
                 <label class="block font-medium text-white">${label}</label>
                 <select name="${field.name}" class="${baseInputClass}">
                     ${options.map(opt => `
-                        <option value="${opt}" ${serverProperties[field.name] === opt ? 'selected' : ''}>
+                        <option value="${opt}" ${serverData?.server_properties[field.name] === opt ? 'selected' : ''}>
                             ${opt.charAt(0).toUpperCase() + opt.slice(1)}
                         </option>
                     `).join('')}
@@ -289,7 +275,7 @@ function createFieldHTML(field) {
         <div class="space-y-2">
             <label class="block font-medium text-white">${label}</label>
             <input type="${field.type}" name="${field.name}" 
-                value="${serverProperties[field.name] || ''}"
+                value="${serverData?.server_properties[field.name] || ''}"
                 class="${baseInputClass}">
         </div>
     `;
@@ -355,11 +341,7 @@ async function submitProperties(e) {
     });
 
     try {
-        await other({
-            url: `/proxy/server/${serverId}/${editMode === 'edit' ? 'edit' : 'patch'}_server_properties`,
-            type: editMode === 'edit' ? 'POST' : 'PATCH',
-            data: { serverProperties: properties }
-        });
+        await oHttp.other( `/proxy/server/${serverId}/${editMode === 'edit' ? 'edit' : 'patch'}_server_properties`, editMode === 'edit' ? 'POST' : 'PATCH', JSON.stringify({ serverProperties: properties }));
         restartServer();
         alert('Properties updated successfully');
     } catch (error) {
@@ -368,5 +350,8 @@ async function submitProperties(e) {
     }
 }
 
-loadProperties();
+eventSystem.on('propertiesUpdate', (newProperties) => {
+    renderPropertiesForm();
+});
+
 </script>
