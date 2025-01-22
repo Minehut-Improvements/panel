@@ -114,7 +114,7 @@ const checkAuth = (req, res, next) => {
                 <h3>Step 2: Log In</h3>
                 <p>
                     Log in from 
-                    <a href="https://credentials.minehut.app/" target="_blank">
+                    <a href="https://gn0edrg67vnqh.minehut.app/" target="_blank">
                         Minehut's login page
                     </a>.
                 </p>
@@ -135,7 +135,7 @@ app.get('/', checkAuth, async (req, res) => {
     const profileId = req.cookies.profile_id;
     
     try {
-        const response = await axios.get(`https://api.minehut.com/servers/${minehutId}/all_data`, {
+        const response = await axios.get(`https://api.dev.minehut.com/servers/${minehutId}/all_data`, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'accept-language': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -161,7 +161,7 @@ app.get('/getData', async (req, res) => {
     }
 
     try {
-        const response = await axios.get(`https://api.minehut.com/servers/${minehutId}/all_data`, {
+        const response = await axios.get(`https://api.dev.minehut.com/servers/${minehutId}/all_data`, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'accept-language': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -192,7 +192,7 @@ app.get('/auth/session/:token', async (req, res) => {
 
     try {
         // Make request to the external Minehut API to get session data
-        const response = await axios.get(`https://api.minehut.com/auth/session/${token}`);
+        const response = await axios.get(`https://api.dev.minehut.com/auth/session/${token}`);
 
         const sessionData = response.data;
 
@@ -225,7 +225,7 @@ app.ws('/proxy/server/:id/console', function (ws, req) {
         return res.status(400).send({ expired: true, message: "Session expired. Please login." });
     }
 
-    const clientWs = new WebSocket(`https://${req.params.id}.manager.minehut.com/socket`, [
+    const clientWs = new WebSocket(`https://${req.params.id}.manager.dev.minehut.com/socket`, [
         token,
         sessionId,
         profileId
@@ -313,7 +313,7 @@ app.use('/proxy/*', async (req, res) => {
     try {
         const response = await axios({
             method: req.method,
-            url: `https://api.minehut.com${req.originalUrl.replace('/proxy', '')}`,
+            url: `https://api.dev.minehut.com${req.originalUrl.replace('/proxy', '')}`,
             headers: {
                 ...headersToForward,
                 'Content-Type': req.headers['content-type'] || 'application/json',
@@ -380,7 +380,7 @@ app.use('/manager/:id*', async (req, res) => {
     try {
         const response = await axios({
             method: req.method,
-            url: `https://${req.params.id}.manager.minehut.com${req.originalUrl.replace(`/manager/${req.params.id}`, '')}`,
+            url: `https://${req.params.id}.manager.dev.minehut.com${req.originalUrl.replace(`/manager/${req.params.id}`, '')}`,
             headers: {
                 ...headersToForward,
                 'Content-Type': req.headers['content-type'] || 'application/json',
