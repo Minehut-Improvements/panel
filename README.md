@@ -42,7 +42,7 @@ We will allow you to use credits that you already have (buying ranks, server pla
 - Add better plan switcher. 🔴
 - Add re-ordering servers. 🔴
 - Add renaming servers. 🔴
-- Add server discovery settings. 🔴
+- Add server discovery settings. 🟡 (Only visibilities were implemented.)
 - Add backup support. 🔴
 - Add user page (minecraft / GS linking, transaction log, etc). 🔴
 - Add resource pack support. 🔴
