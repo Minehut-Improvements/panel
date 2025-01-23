@@ -35,26 +35,26 @@ We will allow you to use credits that you already have (buying ranks, server pla
 
 # TODO:
 ### In order of priority:
-- Add MOTD changer. (Implemented but broken)
-- Show SFTP info.
-- Add better version switcher.
-- Add external domain support.
-- Add better plan switcher.
-- Add re-ordering servers.
-- Add renaming servers.
-- Add server discovery settings.
-- Add backup support.
-- Add user page (minecraft / GS linking, transaction log, etc).
-- Add resource pack support.
-- Add world settings / upload.
-- Add better subuser support.
-- Add mobile support.
-- Add external server support.
-- Add public server list.
-- Add proxy support.
-- Add advertising support.
-- Add toggling cosmetics.
-- Changing FMCS link.
+- Add MOTD changer. (Implemented but broken) 🟡
+- Show SFTP info. ✅
+- Add better version switcher. 🔴
+- Add external domain support. 🔴
+- Add better plan switcher. 🔴
+- Add re-ordering servers. 🔴
+- Add renaming servers. 🔴
+- Add server discovery settings. 🔴
+- Add backup support. 🔴
+- Add user page (minecraft / GS linking, transaction log, etc). 🔴
+- Add resource pack support. 🔴
+- Add world settings / upload. 🔴
+- Add better subuser support. 🔴
+- Add mobile support. 🔴
+- Add external server support. 🔴
+- Add public server list. 🔴
+- Add proxy support. 🔴
+- Add advertising support. 🔴
+- Add toggling cosmetics. 🔴
+- Changing FMCS link. 🔴
 
 # What will *not* be added:
 I refuse to mess with the payment system, period. You will not be able to buy credits using this panel. Please use the official panel for purchases.
