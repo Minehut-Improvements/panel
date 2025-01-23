@@ -83,6 +83,35 @@
     </div>
 </div>
 
+<hr class="rounded-xl border-none h-0.5 bg-neutral-700 my-5">
+
+<div class="flex justify-between items-center mb-6">
+    <h3 class="text-2xl font-bold">SFTP Information</h3>
+</div>
+<div>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+            <label for="sftp-username" class="block text-sm font-medium text-gray-400 mb-1">Username</label>
+            <input type="text" id="sftp-username" class="w-full px-3 py-2 bg-gray-700 text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+        </div>
+        <div>
+            <label for="sftp-password" class="block text-sm font-medium text-gray-400 mb-1">Password</label>
+            <input type="text" id="sftp-password" class="w-full px-3 py-2 bg-gray-700 text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+        </div>
+        <div>
+            <label for="sftp-hostname" class="block text-sm font-medium text-gray-400 mb-1">Hostname</label>
+            <input type="text" id="sftp-hostname" class="w-full px-3 py-2 bg-gray-700 text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+        </div>
+        <div>
+            <label for="sftp-port" class="block text-sm font-medium text-gray-400 mb-1">Port</label>
+            <input type="text" id="sftp-port" class="w-full px-3 py-2 bg-gray-700 text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+        </div>
+    </div>
+    <button onclick="resetSFTPCredentials()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105">
+        Reset SFTP Credientials
+    </button>
+</div>
+
 <script>
 let currentPath = '/';
 let currentFile = '';
@@ -97,6 +126,43 @@ let uploadCancelled = false;
 let lastSelectedFile = null;
 let shiftPressed = false;
 
+// sftp things
+async function fetchSFTPInfo() {
+    try {
+        const response = await oHttp.get(`/proxy/v1/server/${serverId}/sftp`);
+        if (response.response.code !== 200) throw new Error('Failed to fetch SFTP info');
+
+        const sftpInfo = response.response.body;
+
+        document.getElementById('sftp-username').value = sftpInfo.username;
+        document.getElementById('sftp-password').value = sftpInfo.password;
+        document.getElementById('sftp-hostname').value = 'ftp.dev.minehut.com';
+        document.getElementById('sftp-port').value = '2223';
+    } catch (error) {
+        console.error('Error fetching SFTP info:', error);
+        errorAlert('Failed to fetch SFTP information');
+    }
+}
+
+// call
+fetchSFTPInfo();
+
+// reset sftp
+async function resetSFTPCredentials() {
+    try {
+        const response = await oHttp.post(`/proxy/v1/server/${serverId}/sftp/reset`);
+        if (response.response.code !== 200) throw new Error('Failed to reset SFTP credentials');
+
+        await fetchSFTPInfo();
+        alert('SFTP credentials have been reset successfully');
+    } catch (error) {
+        console.error('Error resetting SFTP credentials:', error);
+        errorAlert('Failed to reset SFTP credentials');
+    }
+}
+
+// Update the button click handler
+document.querySelector('button[onclick="changeMOTD()"]').onclick = resetSFTPCredentials;
 // Safe extensions to open (aka text / configs that are human-readable)
 const SUPPORTED_EXTENSIONS = [
   '.yml', '.yaml', '.json', '.txt', '.log', '.gz',
