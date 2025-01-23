@@ -17,6 +17,28 @@
     </style>
 </head>
 <body class="h-full flex flex-col text-white">
+    <!-- Navigation abrr fvv-->
+    <nav class="bg-white border-gray-200 dark:bg-gray-900">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+        <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
+            <img src="https://i.imgur.com/fjiQrC1.jpeg" class="h-8" alt="Logo" />
+            <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Minehut Improvements</span>
+        </a>
+        <button data-collapse-toggle="navbar-default" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-default" aria-expanded="false">
+            <span class="sr-only">homer</span>
+            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
+            </svg>
+        </button>
+        <div class="hidden w-full md:block md:w-auto" id="navbar-default">
+            <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border bg-gray-50/50 rounded-lg md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-gray-900/50 border-gray-700/50">
+                <li>
+                    <a class="block py-2 px-3 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 dark:text-white md:dark:text-white"><span id="userCredits">Loading...</span> Credits</a>
+                </li>
+            </ul>
+        </div>
+        </div>
+    </nav> 
     <div class="container mx-auto px-4 py-8 max-w-[90%]">
         <!-- Navigation Card -->
         <div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-2 mb-8">
@@ -256,6 +278,7 @@ const oHttp = {
 let serverData = {};
 const serverId = window.location.pathname.split('/')[2];
 let updateInterval;
+let userId = null;
 
 // Helper functions
 function formatBytes(value, unit = 'B') {
@@ -488,6 +511,12 @@ async function updateServerInfo() {
             return;
         }
 
+        // Get user ID from server owner and fetch credits
+        if (server.owner) {
+            userId = server.owner;
+            fetchCredits();
+        }
+
         const prevServerData = serverData;
         serverData = { ...server };
         
@@ -641,6 +670,32 @@ async function resetProps(hideAlert = false) {
         console.error('Failed to reset server properties:', error);
     }
 }
+
+async function fetchCredits() {
+    try {
+        if (!userId) {
+            console.log('No userId available');
+            return;
+        }
+        const response = await oHttp.get(`/proxy/v2/user/${userId}`);
+        console.log('Credits response:', response); // Debug log
+        
+        if (response.response.code !== 200) {
+            throw new Error(`API returned status ${response.response.code}`);
+        }
+        
+        const credits = response.response.body.user.credits;
+        if (credits === undefined) {
+            throw new Error('Credits not found in response');
+        }
+        
+        document.getElementById('userCredits').innerText = credits;
+    } catch (error) {
+        console.error('Failed to fetch credits:', error);
+        document.getElementById('userCredits').innerText = 'Error';
+    }
+}
+
 
 // Start updating server info
 updateServerInfo();

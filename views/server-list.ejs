@@ -12,6 +12,27 @@
     </style>
 </head>
 <body class="min-h-screen overflow-auto text-white">
+    <nav class="bg-white border-gray-200 dark:bg-gray-900">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+        <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
+            <img src="https://i.imgur.com/fjiQrC1.jpeg" class="h-8" alt="Logo" />
+            <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Minehut Improvements</span>
+        </a>
+        <button data-collapse-toggle="navbar-default" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-default" aria-expanded="false">
+            <span class="sr-only">homer</span>
+            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
+            </svg>
+        </button>
+        <div class="hidden w-full md:block md:w-auto" id="navbar-default">
+            <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border bg-gray-50/50 rounded-lg md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-gray-900/50 border-gray-700/50">
+                <li>
+                    <a class="block py-2 px-3 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 dark:text-white md:dark:text-white"><span id="userCredits">Loading...</span> Credits</a>
+                </li>
+            </ul>
+        </div>
+        </div>
+    </nav>  
     <main class="container mx-auto px-4 py-8 space-y-6">
         <header class="bg-gray-900/90 rounded-xl border border-gray-700 p-6 text-center space-y-4">
             <h1 class="text-4xl font-bold">Server Dashboard</h1>
@@ -54,6 +75,19 @@
     <script>
         let lastData = {};
         let updateInterval;
+        let minehutId = null;
+
+        async function fetchCredits() {
+            try {
+                if (!minehutId) return;
+                const response = await axios.get(`/proxy/v2/user/${minehutId}`);
+                const credits = response.data.user.credits;
+                document.getElementById('userCredits').innerText = credits;
+            } catch (error) {
+                console.error('Failed to fetch credits:', error);
+                document.getElementById('userCredits').innerText = 'Error';
+            }
+        }
 
         function createServerRow(server) {
             let statusText = '';
@@ -127,6 +161,12 @@
                 const response = await axios.get('/getData');
                 const servers = response.data;
                 
+                // Get minehut ID from the first server's owner field
+                if (servers.length > 0 && servers[0].owner) {
+                    minehutId = servers[0].owner;
+                    fetchCredits();
+                }
+                
                 let html = '';
                 servers.forEach(server => {
                     html += createServerRow(server);
@@ -189,5 +229,21 @@
     </script>
     <div hidden class="cursor"></div>
     <div hidden class="cursor-inner"></div>
+
+    <!-- Add popup markup -->
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+    <div id="createServerPopup" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-900 rounded-xl border border-gray-700 p-6 hidden z-50 w-96">
+        <h2 class="text-2xl font-bold mb-4">Create New Server</h2>
+        <div class="space-y-4">
+            <div>
+                <label for="serverName" class="block text-sm font-medium mb-2">Server Name</label>
+                <input type="text" id="serverName" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 text-white" placeholder="Enter server name">
+            </div>
+            <div class="flex justify-end gap-4">
+                <button onclick="closeCreateServerPopup()" class="px-4 py-2 rounded-lg font-medium bg-gray-800 hover:bg-gray-700 text-white">Cancel</button>
+                <button onclick="createServer()" class="px-4 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-500 text-white">Create</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

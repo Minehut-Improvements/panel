@@ -111,6 +111,11 @@ const checkAuth = (req, res, next) => {
                         GitHub Repository
                     </a>.
                 </p>
+                <p>
+                    If you are using firefox, Please install it from <a href="https://addons.mozilla.org/en-US/firefox/addon/minehut-login-redirecter/" target="_blank">
+                        Mozilla Add-ons
+                    </a> page.
+                </p>
                 <h3>Step 2: Log In</h3>
                 <p>
                     Log in from 
