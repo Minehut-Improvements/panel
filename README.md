@@ -35,7 +35,7 @@ We will allow you to use credits that you already have (buying ranks, server pla
 
 # TODO:
 ### In order of priority:
-- Add MOTD changer.
+- Add MOTD changer. (Implemented but broken)
 - Show SFTP info.
 - Add better version switcher.
 - Add external domain support.
