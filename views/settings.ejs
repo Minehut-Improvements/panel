@@ -1,4 +1,17 @@
 <div class="flex justify-between items-center mb-6">
+    <h3 class="text-2xl font-bold">Change MOTD</h3>
+</div>
+<div>
+    <textarea id="motd-input" 
+        class="w-full p-3 mb-6 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg text-white resize-y min-h-[100px]" 
+        placeholder="Loading MOTD..."
+        rows="4"></textarea>
+    <button onclick="changeMOTD()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105">
+        Change MOTD
+    </button>
+</div>
+<hr class="rounded-xl border-none h-0.5 bg-neutral-700 my-5">
+<div class="flex justify-between items-center mb-6">
     <h3 class="text-2xl font-bold">Server Properties</h3>
     <button onclick="resetProps()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105">
         Reset server.properties
@@ -39,6 +52,32 @@
 <script>
 // Variables
 const MAX_PORTS = 2; // Seems to be the maximum amount of ports any server can have
+
+// Add these functions near the top of your script section
+async function fetchMOTD() {
+    try {
+        const response = await oHttp.get(`/proxy/server/${serverId}`);
+        const motd = response.response.body.server.motd;
+        document.getElementById('motd-input').value = motd || '';
+    } catch (error) {
+        errorAlert(`Failed to fetch MOTD: ${error.connection?.response?.body || 'Unknown error'}`);
+        console.error('Failed to fetch MOTD:', error);
+    }
+}
+
+async function changeMOTD() {
+    try {
+        const motd = document.getElementById('motd-input').value;
+        await oHttp.post(`/proxy/server/${serverId}/change_motd`, { motd });
+        alert('MOTD updated successfully');
+    } catch (error) {
+        errorAlert(`Failed to update MOTD: ${error.connection?.response?.body || 'Unknown error'}`);
+        console.error('Failed to update MOTD:', error);
+    }
+}
+
+// Call this when the page loads
+document.addEventListener('DOMContentLoaded', fetchMOTD);
 
 function initializeProperties() {
     const form = document.getElementById('properties-form');
