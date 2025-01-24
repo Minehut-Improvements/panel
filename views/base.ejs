@@ -18,26 +18,35 @@
 </head>
 <body class="<% if (req.path.startsWith('/server/')) { %>h-full flex flex-col <% } %>text-white">
     <!-- Navigation bar -->
-    <nav class="bg-white border-gray-200 dark:bg-gray-900">
+    <nav class="bg-[rgba(17,25,40,0.75)] border-b border-[rgba(255,255,255,0.125)]">
         <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-            <div class="flex items-center space-x-8">
-                <span class="text-white"><span id="userCredits">Loading...</span> Credits</span>
+            <div class="flex items-center space-x-8 text-gray-300 p-2">
+                <a href="/" class="nav-link hover:text-blue-400 transition-all duration-300 relative after:content-[''] after:absolute after:w-full after:h-0.5 after:bg-blue-400 after:left-0 after:-bottom-1 after:scale-x-0 hover:after:scale-x-100 after:transition-transform" id="nav-home">Home</a>
                 <% if (req.path.startsWith('/server/')) { %>
-                    <div class="flex space-x-8">
-                        <a href="/server/<%= serverId %>/console" class="<%= page === 'console' ? 'text-blue-400' : 'text-gray-300 hover:text-white' %> transition-colors duration-200">Console</a>
-                        <a href="/server/<%= serverId %>/settings" class="<%= page === 'settings' ? 'text-blue-400' : 'text-gray-300 hover:text-white' %> transition-colors duration-200">Settings</a>
-                        <a href="/server/<%= serverId %>/stats" class="<%= page === 'stats' ? 'text-blue-400' : 'text-gray-300 hover:text-white' %> transition-colors duration-200">Stats</a>
-                        <a href="/server/<%= serverId %>/files" class="<%= page === 'file' ? 'text-blue-400' : 'text-gray-300 hover:text-white' %> transition-colors duration-200">Files</a>
-                    </div>
+                <div class="flex space-x-8">
+                    <a href="/server/<%= serverId %>/console" class="nav-link hover:text-blue-400 transition-all duration-300 relative after:content-[''] after:absolute after:w-full after:h-0.5 after:bg-blue-400 after:left-0 after:-bottom-1 after:scale-x-0 hover:after:scale-x-100 after:transition-transform" id="nav-console">Console</a>
+                    <a href="/server/<%= serverId %>/settings" class="nav-link hover:text-blue-400 transition-all duration-300 relative after:content-[''] after:absolute after:w-full after:h-0.5 after:bg-blue-400 after:left-0 after:-bottom-1 after:scale-x-0 hover:after:scale-x-100 after:transition-transform" id="nav-settings">Settings</a>
+                    <a href="/server/<%= serverId %>/stats" class="nav-link hover:text-blue-400 transition-all duration-300 relative after:content-[''] after:absolute after:w-full after:h-0.5 after:bg-blue-400 after:left-0 after:-bottom-1 after:scale-x-0 hover:after:scale-x-100 after:transition-transform" id="nav-stats">Stats</a>
+                    <a href="/server/<%= serverId %>/files" class="nav-link hover:text-blue-400 transition-all duration-300 relative after:content-[''] after:absolute after:w-full after:h-0.5 after:bg-blue-400 after:left-0 after:-bottom-1 after:scale-x-0 hover:after:scale-x-100 after:transition-transform" id="nav-files">Files</a>
+                </div>
                 <% } %>
             </div>
-            <div class="relative">
-                <button id="userDropdownBtn" class="text-white focus:outline-none">
-                    Account ▼
-                </button>
-                <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl">
-                    <a href="/user" class="block px-4 py-2 text-white hover:bg-gray-700">Account Settings</a>
-                    <button onclick="logout()" class="w-full text-left px-4 py-2 text-white hover:bg-gray-700">Logout</button>
+            <div class="flex items-center space-x-6">
+                <div class="text-gray-300">
+                    <span id="userCredits" class="font-medium text-blue-400">Loading...</span>
+                    <span class="ml-1">Credits</span>
+                </div>
+                <div class="relative">
+                    <button id="userDropdownBtn" class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] transition-all duration-300 focus:outline-none">
+                        <span class="text-gray-300">Account</span>
+                        <svg id="dropdownArrow" class="w-4 h-4 text-gray-300 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="userDropdown" class="hidden opacity-0 absolute right-0 mt-2 w-48 bg-[rgba(17,25,40,0.95)] border border-[rgba(255,255,255,0.125)] rounded-lg shadow-xl backdrop-blur-sm transition-all duration-300 ease-in-out transform scale-95">
+                        <a href="/user" class="block px-4 py-2 text-gray-300 hover:text-blue-400 hover:bg-[rgba(255,255,255,0.1)] transition-colors duration-300 rounded-t-lg">Account Settings</a>
+                        <button onclick="logout()" class="w-full text-left px-4 py-2 text-gray-300 hover:text-blue-400 hover:bg-[rgba(255,255,255,0.1)] transition-colors duration-300 rounded-b-lg">Logout</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -227,7 +236,8 @@ const oHttp = {
             throw {
                 error: error,
                 message: error.message,
-                connection: conn
+                connection: conn,
+                conn: conn
             };
         }
     },
@@ -495,7 +505,7 @@ async function updateServerInfo() {
             return;
         }
 
-        const server = conn.response.body.find(s => s._id === serverId);
+        const server = JSON.parse(JSON.stringify(conn.response.body)).find(s => s._id === serverId);
         if (!server) {
             errorAlert('Failed to find server!');
             window.location.href = "/";
@@ -687,7 +697,7 @@ async function updateUserInfo() {
             eventSystem.emit('creditUpdate', userData.user.credits);
         }
     } catch (error) {
-        console.error('Failed to fetch credits:', error);
+        console.error('Failed to fetch user data:', error);
         document.getElementById('userCredits').innerText = 'Error';
     }
 }
@@ -715,14 +725,52 @@ updateUserInfo();
 updateInterval_Userinfo = setInterval(updateUserInfo, 15000); // Update user info every 15 seconds
 
 document.getElementById('userDropdownBtn').addEventListener('click', () => {
-    document.getElementById('userDropdown').classList.toggle('hidden');
+    const dropdown = document.getElementById('userDropdown');
+    const arrow = document.getElementById('dropdownArrow');
+    
+    if (dropdown.classList.contains('hidden')) {
+        dropdown.classList.remove('hidden');
+        setTimeout(() => {
+            dropdown.classList.remove('opacity-0', 'scale-95');
+            dropdown.classList.add('opacity-100', 'scale-100');
+            arrow.style.transform = 'rotate(180deg)';
+        }, 10);
+    } else {
+        dropdown.classList.remove('opacity-100', 'scale-100');
+        dropdown.classList.add('opacity-0', 'scale-95');
+        arrow.style.transform = '';
+        setTimeout(() => {
+            dropdown.classList.add('hidden');
+        }, 300);
+    }
 });
 
 document.addEventListener('click', (e) => {
-    if (!e.target.closest('#userDropdownBtn')) {
-        document.getElementById('userDropdown').classList.add('hidden');
+    const dropdown = document.getElementById('userDropdown');
+    const arrow = document.getElementById('dropdownArrow');
+    if (!e.target.closest('#userDropdownBtn') && !dropdown.classList.contains('hidden')) {
+        dropdown.classList.remove('opacity-100', 'scale-100');
+        dropdown.classList.add('opacity-0', 'scale-95');
+        arrow.style.transform = '';
+        setTimeout(() => {
+            dropdown.classList.add('hidden');
+        }, 300);
     }
 });
+
+// Active page highlighting
+const path = window.location.pathname;
+const activeClasses = 'text-blue-400 bg-gray-800 bg-opacity-25 rounded-lg';
+
+if (path === '/') {
+    document.getElementById('nav-home').classList.add('text-blue-300');
+} else {
+    const page = path.split('/')[3];
+    const navLink = document.getElementById(`nav-${page}`);
+    if (navLink) {
+        navLink.classList.add(...activeClasses.split(' '));
+    }
+}
 
 // Export functions for global access
 <% if (req.path.startsWith('/server/')) { %>

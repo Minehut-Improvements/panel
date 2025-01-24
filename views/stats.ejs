@@ -39,35 +39,39 @@
 const advancedMode = document.getElementById('advanced-mode');
 const detailElements = document.querySelectorAll('[id$="-details"]');
 
-function updateMetrics() {
-    fetch(`/proxy/metrics/${serverId}`) // Info is not provided by getData, so this is required.
-        .then(response => response.json())
-        .then(data => {
-            // CPU
-            const cpuPercent = (data.cpu.usage / data.cpu.request * 100).toFixed(1);
-            document.getElementById('cpu-percent').textContent = cpuPercent + '%';
-            document.getElementById('cpu-details').innerHTML = `
-                Usage: ${data.cpu.usage}<br>
-                Request: ${data.cpu.request}<br>
-                Limit: ${data.cpu.limit}
-            `;
-            // Memory
-            const memoryPercent = ((data.memory.usage / data.memory.request) * 100).toFixed(1);
-            document.getElementById('memory-percent').textContent = memoryPercent + '%';
-            document.getElementById('memory-number').textContent = '(' + formatBytes(data.memory.usage, 'MiB') + ")";
-            document.getElementById('memory-details').innerHTML = `
-                Usage: ${data.memory.usage} MB<br>
-                Request: ${data.memory.request} MB<br>
-                Limit: ${data.memory.limit} MB
-            `;
-            // Disk
-            document.getElementById('disk-usage').textContent = formatBytes(data.disk.usage, 'KiB');
-            document.getElementById('disk-details').innerHTML = `
-                Usage: ${data.disk.usage} KB<br>
-                ${data.disk.limit ? `Limit: ${data.disk.limit} KB` : 'No limit set'}
-            `;
-        })
-        .catch(error => errorAlert(`Error fetching metrics: ${error}`));
+async function updateMetrics() {
+    const conn = await oHttp.get(`/proxy/metrics/${serverId}`); // Info is not provided by getData, so this is required to be seperate.
+
+    if(conn.response.code != 200) {
+        return;
+    }
+
+    const data = conn.response.body;
+    if (data && data.cpu && data.cpu.usage && data.cpu.request && data.cpu.limit && data.memory && data.memory.usage && data.memory.request && data.memory.limit && data.disk && data.disk.usage && data.disk.request && data.disk.limit) {
+        // CPU
+        const cpuPercent = (data.cpu.usage / data.cpu.request * 100).toFixed(1);
+        document.getElementById('cpu-percent').textContent = cpuPercent + '%';
+        document.getElementById('cpu-details').innerHTML = `
+            Usage: ${data.cpu.usage}<br>
+            Request: ${data.cpu.request}<br>
+            Limit: ${data.cpu.limit}
+        `;
+        // Memory
+        const memoryPercent = ((data.memory.usage / data.memory.request) * 100).toFixed(1);
+        document.getElementById('memory-percent').textContent = memoryPercent + '%';
+        document.getElementById('memory-number').textContent = '(' + formatBytes(data.memory.usage, 'MiB') + ")";
+        document.getElementById('memory-details').innerHTML = `
+            Usage: ${data.memory.usage} MB<br>
+            Request: ${data.memory.request} MB<br>
+            Limit: ${data.memory.limit} MB
+        `;
+        // Disk
+        document.getElementById('disk-usage').textContent = formatBytes(data.disk.usage, 'KiB');
+        document.getElementById('disk-details').innerHTML = `
+            Usage: ${data.disk.usage} KB<br>
+            ${data.disk.limit ? `Limit: ${data.disk.limit} KB` : 'No limit set'}
+        `;
+    }
 }
 
 advancedMode.addEventListener('change', () => {

@@ -1,10 +1,93 @@
 const express = require('express');
-const axios = require('axios');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const expressWs = require('express-ws');
 const WebSocket = require('ws');
 const cors = require('cors');
+
+// oHttp
+const oHttp = {
+    connection: function() {
+        return {
+            request: {
+                url: null,
+                type: null
+            },
+            response: {
+                code: null,
+                status: null,
+                body: null,
+                connection: null
+            }
+        };
+    },
+
+    async makeRequest(url, type, body = null, headers) {
+        const conn = this.connection();
+        conn.request.url = url;
+        conn.request.type = type;
+
+        try {
+            const options = {
+                method: type,
+                credentials: 'include'
+            };
+
+            if (body) {
+                options.body = body;
+            }
+
+            if (headers) {
+                options.headers = headers;
+            }
+
+            const response = await fetch(url, options);
+            const responseData = await response.json();
+
+            conn.response.code = response.status;
+            conn.response.status = response.status;
+            conn.response.body = responseData;
+            conn.response.connection = response;
+
+            return conn;
+        } catch (error) {
+            throw {
+                error: error,
+                message: error.message,
+                connection: conn,
+                conn: conn
+            };
+        }
+    },
+
+    get: function(url, headers = null) {
+        return this.makeRequest(url, 'GET', null, headers);
+    },
+
+    post: function(url, body, headers = null) {
+        return this.makeRequest(url, 'POST', body, headers);
+    },
+
+    put: function(url, body, headers = null) {
+        return this.makeRequest(url, 'PUT', body, headers);
+    },
+
+    patch: function(url, body, headers = null) {
+        return this.makeRequest(url, 'PATCH', body, headers);
+    },
+
+    delete: function(url, headers = null) {
+        return this.makeRequest(url, 'DELETE', null, headers);
+    },
+
+    options: function(url, headers = null) {
+        return this.makeRequest(url, 'OPTIONS', null, headers);
+    },
+
+    other: function(url, type, body, headers = null) {
+        return this.makeRequest(url, type, body, headers);
+    }
+}
 
 const app = express();
 const port = 8081;
@@ -152,19 +235,19 @@ app.get('/getData', async (req, res) => {
     }
 
     try {
-        const response = await axios.get(`https://api.dev.minehut.com/servers/${minehutId}/all_data`, {
-            headers: {
+        const conn = await oHttp.get(`https://api.dev.minehut.com/servers/${minehutId}/all_data`,
+            {
                 Authorization: `Bearer ${token}`,
                 'accept-language': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                 'x-profile-id': profileId,  // Corrected to use profileId
                 'x-session-id': sessionId
             }
-        });
+        );
 
-        res.json(response.data);
+        res.json(conn.response.body);
     } catch (error) {
         console.log(error);
-        if (error.response && error.response.data && error.response.data.expired) {
+        if (error.conn && error.conn.response && error.conn.response.body && error.conn.response.body.expired) {
             // Clear cookies and respond to the frontend
             res.clearCookie('minehut_id');
             res.clearCookie('token');
@@ -183,9 +266,10 @@ app.get('/auth/session/:token', async (req, res) => {
 
     try {
         // Make request to the external Minehut API to get session data
-        const response = await axios.get(`https://api.dev.minehut.com/auth/session/${token}`);
+        const conn = await oHttp.get(`https://api.dev.minehut.com/auth/session/${token}`);
+        const response = conn.response;
 
-        const sessionData = response.data;
+        const sessionData = response.body;
 
         // Extract necessary fields and store them in cookies
         const minehutId = sessionData.minehut_id;
@@ -302,31 +386,33 @@ app.use('/proxy/*', async (req, res) => {
     }
     
     try {
-        const response = await axios({
-            method: req.method,
-            url: `https://api.dev.minehut.com${req.originalUrl.replace('/proxy', '')}`,
-            headers: {
+        const conn = await oHttp.other(
+            `https://api.dev.minehut.com${req.originalUrl.replace('/proxy', '')}`,
+            req.method,
+            req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : null,
+            {
                 ...headersToForward,
                 'Content-Type': req.headers['content-type'] || 'application/json',
                 Authorization: `Bearer ${token}`,
                 'x-profile-id': profileId,
                 'x-session-id': sessionId 
-            },
-            params: req.query,
-            data: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : undefined
-        });
+            }
+        );
+
+        const response = conn.response;
         
-        res.status(response.status).send(response.data);
+        res.status(response.status).send(response.body);
     } catch (error) {
-        if (error.response) {
-            if (error.response.data?.expired) {
+        console.log(error);
+        if (error.conn) {
+            if (error.conn?.response?.data?.expired) {
                 res.clearCookie('minehut_id');
                 res.clearCookie('token');
                 res.clearCookie('sessionId');
                 res.clearCookie('profile_id');
                 return res.status(401).json({ error: 'Session expired. Please log in again.' });
             }
-            return res.status(error.response.status).json(error.response.data);
+            return res.status(error.conn.response.status ? error.conn.response.status : 400 ).json(error.conn.response.body);
         }
         return res.status(500).json({ error: error.message || 'An unknown error occurred' });
     }
@@ -369,31 +455,32 @@ app.use('/manager/:id*', async (req, res) => {
     }
 
     try {
-        const response = await axios({
-            method: req.method,
-            url: `https://${req.params.id}.manager.dev.minehut.com${req.originalUrl.replace(`/manager/${req.params.id}`, '')}`,
-            headers: {
+        const conn = await oHttp.other(
+            `https://${req.params.id}.manager.dev.minehut.com${req.originalUrl.replace(`/manager/${req.params.id}`, '')}`,
+            req.method,
+            {
                 ...headersToForward,
                 'Content-Type': req.headers['content-type'] || 'application/json',
                 Authorization: `Bearer ${token}`,
                 'x-profile-id': profileId,
                 'x-session-id': sessionId 
             },
-            params: req.query,
-            data: req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : undefined
-        });
+            req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : null
+        );
+        const response = conn.response;
 
-        return res.status(response.status).json(response.data);
+        return res.status(response.status).json(response.body);
     } catch (error) {
-        if (error.response?.data?.expired) {
+        console.log(error);
+        if (error.conn?.response?.data?.expired) {
             res.clearCookie('minehut_id');
             res.clearCookie('token');
             res.clearCookie('sessionId');
             res.clearCookie('profile_id');
             return res.status(401).json({ error: 'Session expired. Please log in again.' });
         }
-        if (error.response) {
-            return res.status(error.response.status).json(error.response.data);
+        if (error.conn.response) {
+            return res.status(error.conn.response.status).json(error.conn.response.body);
         }
         return res.status(500).json({ error: error.message || 'An unknown error occurred' });
     }
