@@ -692,8 +692,8 @@ async function updateUserInfo() {
         if (JSON.stringify(prevUserData) !== JSON.stringify(userData)) {
             eventSystem.emit('userUpdate', userData);
         }
-
-        if (JSON.stringify(prevUserData.user.credits) !== JSON.stringify(userData.user.credits)) {
+        
+        if (!prevUserData?.user?.credits || JSON.stringify(prevUserData?.user?.credits ?? -1) !== JSON.stringify(userData.user.credits)) {
             eventSystem.emit('creditUpdate', userData.user.credits);
         }
     } catch (error) {
