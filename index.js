@@ -342,10 +342,13 @@ app.ws('/proxy/server/:id/console', function (ws, req) {
 
     // Handle WebSocket errors
     clientWs.on('error', (err) => {
-        console.error('Error in client WebSocket:', err.message);
+        ws.close();
+        clientWs.close();
     });
     ws.on('error', (err) => {
-        console.error('Error in server WebSocket:', err.message);
+        clientWs.send('{"Error": "' + JSON.stringify(err) + '"');
+        clientWs.close();
+        ws.close();
     });
 });
 
