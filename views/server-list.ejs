@@ -1,249 +1,193 @@
-<!DOCTYPE html>
-<html class="min-h-screen bg-cover bg-fixed" style="background-image: url('https://panel.oddbyte.dev/img/BrightMoon.jpg');">
-<head>
-    <title>Server Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://oddbyte.dev/js/cursor.js"></script>
-    <link rel="stylesheet" href="https://oddbyte.dev/styles/cursor.css">
-    <style>
-        .fade { transition: all 0.3s ease; }
-        .highlight { background: rgba(56, 189, 248, 0.1); }
-    </style>
-</head>
-<body class="min-h-screen overflow-auto text-white">
-    <nav class="bg-white border-gray-200 dark:bg-gray-900">
-        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-        <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-            <img src="https://i.imgur.com/fjiQrC1.jpeg" class="h-8" alt="Logo" />
-            <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Minehut Improvements</span>
-        </a>
-        <button data-collapse-toggle="navbar-default" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-default" aria-expanded="false">
-            <span class="sr-only">homer</span>
-            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
-            </svg>
-        </button>
-        <div class="hidden w-full md:block md:w-auto" id="navbar-default">
-            <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border bg-gray-50/50 rounded-lg md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-gray-900/50 border-gray-700/50">
-                <li>
-                    <a class="block py-2 px-3 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 dark:text-white md:dark:text-white"><span id="userCredits">Loading...</span> Credits</a>
-                </li>
-            </ul>
+<!-- server-list.ejs -->
+<div class="container mx-auto px-4 py-8 space-y-6">
+    <header class="bg-gray-900/90 rounded-xl border border-gray-700 p-6 text-center space-y-4">
+        <h1 class="text-4xl font-bold">Server Dashboard</h1>
+        <p class="text-gray-300">Welcome to the Server Dashboard. Control and monitor your servers here.</p>
+        <div class="flex flex-wrap justify-center gap-4">
+            <button onclick="showCreateServerPopup()" class="inline-flex items-center px-6 py-3 rounded-lg font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all">
+                <span>Create Server</span>
+                <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+            </button>
+            <button onclick="updateServerList()" class="px-6 py-3 rounded-lg font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all">
+                Refresh
+            </button>
         </div>
-        </div>
-    </nav>  
-    <main class="container mx-auto px-4 py-8 space-y-6">
-        <header class="bg-gray-900/90 rounded-xl border border-gray-700 p-6 text-center space-y-4">
-            <h1 class="text-4xl font-bold">Server Dashboard</h1>
-            <p class="text-gray-300">Welcome to the Server Dashboard. Control and monitor your servers here.</p>
-            <div class="flex flex-wrap justify-center gap-4">
-                <button onclick="showCreateServerPopup()" class="inline-flex items-center px-6 py-3 rounded-lg font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all">
-                    <span>Create Server</span>
-                    <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                </button>
-                <button onclick="updateServerList()" class="px-6 py-3 rounded-lg font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all">
-                    Refresh
-                </button>
-            </div>
-        </header>
+    </header>
 
-        <div id="errorMessage" class="hidden bg-gray-900/90 rounded-xl border border-red-500 p-6 text-center space-y-4">
-            <h2 class="text-2xl font-bold">Oops, there's an error</h2>
-            <p>There was an error: <span class="text-red-400" id="errorText"></span></p>
-        </div>
-
-        <div class="bg-gray-900/90 rounded-xl border border-gray-700 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="bg-gray-800">
-                            <th class="px-6 py-4 font-semibold text-left">Name</th>
-                            <th class="px-6 py-4 font-semibold text-left">Status</th>
-                            <th class="px-6 py-4 font-semibold text-left">Players</th>
-                            <th class="px-6 py-4 font-semibold text-left">Open</th>
-                        </tr>
-                    </thead>
-                    <tbody id="serverList"></tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-
-    <script>
-        let lastData = {};
-        let updateInterval;
-        let minehutId = null;
-
-        async function fetchCredits() {
-            try {
-                if (!minehutId) return;
-                const response = await axios.get(`/proxy/v2/user/${minehutId}`);
-                const credits = response.data.user.credits;
-                document.getElementById('userCredits').innerText = credits;
-            } catch (error) {
-                console.error('Failed to fetch credits:', error);
-                document.getElementById('userCredits').innerText = 'Error';
-            }
-        }
-
-        function createServerRow(server) {
-            let statusText = '';
-            let statusClass = '';
-        
-            if (server.suspended) {
-                statusText = 'Suspended';
-                statusClass = 'text-red-400 font-semibold';
-            } else {
-                switch (server.status) {
-                    case 'SERVICE_OFFLINE':
-                        statusText = 'Hibernating';
-                        statusClass = 'text-red-400 font-semibold';
-                        break;
-                    case 'OFFLINE':
-                        statusText = 'Offline';
-                        statusClass = 'text-red-400 font-semibold';
-                        break;
-                    case 'DOWNLOADING_SERVER':
-                        statusText = 'Downloading';
-                        statusClass = 'text-green-400 font-semibold';
-                        break;
-                    case 'STARTING':
-                        statusText = 'Starting';
-                        statusClass = 'text-green-400 font-semibold';
-                        break;
-                    case 'ONLINE':
-                        statusText = 'Online';
-                        statusClass = 'text-green-400 font-semibold';
-                        break;
-                    case 'STOPPING':
-                        statusText = 'Stopping';
-                        statusClass = 'text-red-400 font-semibold';
-                        break;
-                    default:
-                        statusText = server.status;
-                        statusClass = 'text-gray-500 font-semibold';
-                        break;
-                }
-            }
-        
-            return `
-                <tr class="table-row fade" id="server-${server._id}">
-                    <td class="px-6 py-4">${server.name}</td>
-                    <td class="px-6 py-4 ${statusClass}">${statusText}</td>
-                    <td class="px-6 py-4">${server.player_count}/${server.max_players}</td>
-                    <td class="px-6 py-4">
-                        <button onmouseover="document.querySelector('.cursor').classList.add('hover'); document.querySelector('.cursor-inner').classList.add('hover');" onmouseleave="document.querySelector('.cursor').classList.remove('hover'); document.querySelector('.cursor-inner').classList.remove('hover');" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white" onclick="openServer('${server._id}')">Open</button>
-                    </td>
-                </tr>
-            `;
-        }
-
-        function highlightChanges(server, oldServer) {
-            const row = document.getElementById(`server-${server._id}`);
-            if (!row) return;
-
-            if (oldServer) {
-                if (server.online !== oldServer.online || 
-                    server.player_count !== oldServer.player_count) {
-                    row.classList.add('highlight');
-                    setTimeout(() => row.classList.remove('highlight'), 1000);
-                }
-            }
-        }
-
-        async function updateServerList(setLoading = true) {
-            try {
-                const tbody = document.getElementById('serverList');
-                if (setLoading) tbody.innerHTML = '<h2 class="px-6 py-4 font-medium text-gray-500">Loading...</h2>';
-                const response = await axios.get('/getData');
-                const servers = response.data;
-                
-                // Get minehut ID from the first server's owner field
-                if (servers.length > 0 && servers[0].owner) {
-                    minehutId = servers[0].owner;
-                    fetchCredits();
-                }
-                
-                let html = '';
-                servers.forEach(server => {
-                    html += createServerRow(server);
-                    highlightChanges(server, lastData[server._id]);
-                    lastData[server._id] = { ...server };
-                });
-                
-                tbody.innerHTML = html;
-            } catch (error) {
-                console.error('Failed to fetch servers:', error);
-            }
-        }
-
-        function openServer(id) {
-            window.open(`https://panel.oddbyte.dev/server/${id}`);
-        }
-
-        function showCreateServerPopup() {
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById('createServerPopup').style.display = 'block';
-        }
-
-        function closeCreateServerPopup() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('createServerPopup').style.display = 'none';
-            document.getElementById('serverName').value = '';
-        }
-
-        async function createServer() {
-            const name = document.getElementById('serverName').value.trim();
-            if (!name) {
-                alert('Please enter a valid server name.');
-                return;
-            }
-
-            try {
-                const response = await axios.post('/proxy/servers/create', {
-                    platform: 'java',
-                    name: name,
-                    type: 'PAPER',
-                    version: '66ba7dc16b14b54cfc0e4edc'
-                });
-
-                if (response.status === 200) {
-                    location.reload();
-                } else {
-                    console.error('Failed to create server:', response);
-                }
-            } catch (error) {
-                console.error('Error creating server:', error);
-            } finally {
-                closeCreateServerPopup();
-            }
-        }
-
-        updateServerList();
-        updateInterval = setInterval( () => {updateServerList(false)}, 3000);
-
-        window.onbeforeunload = () => clearInterval(updateInterval);
-    </script>
-    <div hidden class="cursor"></div>
-    <div hidden class="cursor-inner"></div>
-
-    <!-- Add popup markup -->
-    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
-    <div id="createServerPopup" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-900 rounded-xl border border-gray-700 p-6 hidden z-50 w-96">
-        <h2 class="text-2xl font-bold mb-4">Create New Server</h2>
-        <div class="space-y-4">
-            <div>
-                <label for="serverName" class="block text-sm font-medium mb-2">Server Name</label>
-                <input type="text" id="serverName" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 text-white" placeholder="Enter server name">
-            </div>
-            <div class="flex justify-end gap-4">
-                <button onclick="closeCreateServerPopup()" class="px-4 py-2 rounded-lg font-medium bg-gray-800 hover:bg-gray-700 text-white">Cancel</button>
-                <button onclick="createServer()" class="px-4 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-500 text-white">Create</button>
-            </div>
+    <div class="bg-gray-900/90 rounded-xl border border-gray-700 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-800">
+                        <th class="px-6 py-4 font-semibold text-left">Name</th>
+                        <th class="px-6 py-4 font-semibold text-left">Status</th>
+                        <th class="px-6 py-4 font-semibold text-left">Players</th>
+                        <th class="px-6 py-4 font-semibold text-left">Open</th>
+                    </tr>
+                </thead>
+                <tbody id="serverList"></tbody>
+            </table>
         </div>
     </div>
-</body>
-</html>
+</div>
+
+<!-- Popup markup -->
+<div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+<div id="createServerPopup" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-900 rounded-xl border border-gray-700 p-6 hidden z-50 w-96">
+    <h2 class="text-2xl font-bold mb-4">Create New Server</h2>
+    <div class="space-y-4">
+        <div>
+            <label for="serverName" class="block text-sm font-medium mb-2">Server Name</label>
+            <input type="text" id="serverName" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 text-white" placeholder="Enter server name">
+        </div>
+        <div class="flex justify-end gap-4">
+            <button onclick="closeCreateServerPopup()" class="px-4 py-2 rounded-lg font-medium bg-gray-800 hover:bg-gray-700 text-white">Cancel</button>
+            <button onclick="createServer()" class="px-4 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-500 text-white">Create</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let lastData = {};
+let updateInterval;
+let minehutId = null;
+
+function createServerRow(server) {
+    let statusText = '';
+    let statusClass = '';
+
+    if (server.suspended) {
+        statusText = 'Suspended';
+        statusClass = 'text-red-400 font-semibold';
+    } else {
+        switch (server.status) {
+            case 'SERVICE_OFFLINE':
+                statusText = 'Hibernating';
+                statusClass = 'text-red-400 font-semibold';
+                break;
+            case 'OFFLINE':
+                statusText = 'Offline';
+                statusClass = 'text-red-400 font-semibold';
+                break;
+            case 'DOWNLOADING_SERVER':
+                statusText = 'Downloading';
+                statusClass = 'text-green-400 font-semibold';
+                break;
+            case 'STARTING':
+                statusText = 'Starting';
+                statusClass = 'text-green-400 font-semibold';
+                break;
+            case 'ONLINE':
+                statusText = 'Online';
+                statusClass = 'text-green-400 font-semibold';
+                break;
+            case 'STOPPING':
+                statusText = 'Stopping';
+                statusClass = 'text-red-400 font-semibold';
+                break;
+            default:
+                statusText = server.status;
+                statusClass = 'text-gray-500 font-semibold';
+                break;
+        }
+    }
+
+    return `
+        <tr class="table-row fade" id="server-${server._id}">
+            <td class="px-6 py-4">${server.name}</td>
+            <td class="px-6 py-4 ${statusClass}">${statusText}</td>
+            <td class="px-6 py-4">${server.player_count}/${server.max_players}</td>
+            <td class="px-6 py-4">
+                <button class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white" onclick="openServer('${server._id}')">Open</button>
+            </td>
+        </tr>
+    `;
+}
+
+function highlightChanges(server, oldServer) {
+    const row = document.getElementById(`server-${server._id}`);
+    if (!row) return;
+
+    if (oldServer) {
+        if (server.online !== oldServer.online || 
+            server.player_count !== oldServer.player_count) {
+            row.classList.add('highlight');
+            setTimeout(() => row.classList.remove('highlight'), 1000);
+        }
+    }
+}
+
+async function updateServerList(setLoading = true) {
+    try {
+        const tbody = document.getElementById('serverList');
+        if (setLoading) tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 font-medium text-gray-500">Loading...</td></tr>';
+        
+        const response = await oHttp.get('/getData');
+        const servers = response.response.body;
+        
+        if (servers.length > 0 && servers[0].owner) {
+            minehutId = servers[0].owner;
+        }
+        
+        let html = '';
+        servers.forEach(server => {
+            html += createServerRow(server);
+            highlightChanges(server, lastData[server._id]);
+            lastData[server._id] = { ...server };
+        });
+        
+        tbody.innerHTML = html;
+    } catch (error) {
+        console.error('Failed to fetch servers:', error);
+    }
+}
+
+function openServer(id) {
+    window.location.href = `/server/${id}`;
+}
+
+function showCreateServerPopup() {
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('createServerPopup').style.display = 'block';
+}
+
+function closeCreateServerPopup() {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('createServerPopup').style.display = 'none';
+    document.getElementById('serverName').value = '';
+}
+
+async function createServer() {
+    const name = document.getElementById('serverName').value.trim();
+    if (!name) {
+        alert('Please enter a valid server name.');
+        return;
+    }
+
+    try {
+        const response = await oHttp.post('/proxy/servers/create', JSON.stringify({
+            platform: 'java',
+            name: name,
+            type: 'PAPER',
+            version: '66ba7dc16b14b54cfc0e4edc'
+        }));
+
+        if (response.response.code === 200) {
+            location.reload();
+        } else {
+            console.error('Failed to create server:', response);
+        }
+    } catch (error) {
+        console.error('Error creating server:', error);
+    } finally {
+        closeCreateServerPopup();
+    }
+}
+
+updateServerList();
+updateInterval = setInterval(() => { updateServerList(false) }, 3000);
+
+window.onbeforeunload = () => clearInterval(updateInterval);
+</script>

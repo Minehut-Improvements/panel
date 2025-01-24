@@ -16,70 +16,56 @@
         input[type="checkbox"]:checked { background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e"); }
     </style>
 </head>
-<body class="h-full flex flex-col text-white">
-    <!-- Navigation abrr fvv-->
+<body class="<% if (req.path.startsWith('/server/')) { %>h-full flex flex-col <% } %>text-white">
+    <!-- Navigation bar -->
     <nav class="bg-white border-gray-200 dark:bg-gray-900">
         <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-        <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-            <img src="https://i.imgur.com/fjiQrC1.jpeg" class="h-8" alt="Logo" />
-            <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Minehut Improvements</span>
-        </a>
-        <button data-collapse-toggle="navbar-default" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-default" aria-expanded="false">
-            <span class="sr-only">homer</span>
-            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
-            </svg>
-        </button>
-        <div class="hidden w-full md:block md:w-auto" id="navbar-default">
-            <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border bg-gray-50/50 rounded-lg md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-gray-900/50 border-gray-700/50">
-                <li>
-                    <a class="block py-2 px-3 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 dark:text-white md:dark:text-white"><span id="userCredits">Loading...</span> Credits</a>
-                </li>
-            </ul>
-        </div>
-        </div>
-    </nav> 
-    <div class="container mx-auto px-4 py-8 max-w-[90%]">
-        <!-- Navigation Card -->
-        <div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-2 mb-8">
-            <div class="flex space-x-8 justify-center">
-                <a href="/server/<%= serverId %>/console" class="<%= page === 'console' ? 'text-blue-400 border-blue-400' : 'text-gray-300 border-transparent hover:text-white hover:border-gray-400' %> py-4 px-6 border-b-2 font-medium transition-colors duration-200">
-                    Console
-                </a>
-                <a href="/server/<%= serverId %>/settings" class="<%= page === 'settings' ? 'text-blue-400 border-blue-400' : 'text-gray-300 border-transparent hover:text-white hover:border-gray-400' %> py-4 px-6 border-b-2 font-medium transition-colors duration-200">
-                    Settings
-                </a>
-                <a href="/server/<%= serverId %>/stats" class="<%= page === 'stats' ? 'text-blue-400 border-blue-400' : 'text-gray-300 border-transparent hover:text-white hover:border-gray-400' %> py-4 px-6 border-b-2 font-medium transition-colors duration-200">
-                    Stats
-                </a>
-                <a href="/server/<%= serverId %>/files" class="<%= page === 'file' ? 'text-blue-400 border-blue-400' : 'text-gray-300 border-transparent hover:text-white hover:border-gray-400' %> py-4 px-6 border-b-2 font-medium transition-colors duration-200">
-                    Files
-                </a>
+            <div class="flex items-center space-x-8">
+                <span class="text-white"><span id="userCredits">Loading...</span> Credits</span>
+                <% if (req.path.startsWith('/server/')) { %>
+                    <div class="flex space-x-8">
+                        <a href="/server/<%= serverId %>/console" class="<%= page === 'console' ? 'text-blue-400' : 'text-gray-300 hover:text-white' %> transition-colors duration-200">Console</a>
+                        <a href="/server/<%= serverId %>/settings" class="<%= page === 'settings' ? 'text-blue-400' : 'text-gray-300 hover:text-white' %> transition-colors duration-200">Settings</a>
+                        <a href="/server/<%= serverId %>/stats" class="<%= page === 'stats' ? 'text-blue-400' : 'text-gray-300 hover:text-white' %> transition-colors duration-200">Stats</a>
+                        <a href="/server/<%= serverId %>/files" class="<%= page === 'file' ? 'text-blue-400' : 'text-gray-300 hover:text-white' %> transition-colors duration-200">Files</a>
+                    </div>
+                <% } %>
+            </div>
+            <div class="relative">
+                <button id="userDropdownBtn" class="text-white focus:outline-none">
+                    Account ▼
+                </button>
+                <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl">
+                    <a href="/user" class="block px-4 py-2 text-white hover:bg-gray-700">Account Settings</a>
+                    <button onclick="logout()" class="w-full text-left px-4 py-2 text-white hover:bg-gray-700">Logout</button>
+                </div>
             </div>
         </div>
-
+    </nav>
+    <div class="container mx-auto px-4 py-8 max-w-[90%]">
+        <% if (req.path.startsWith('/server/')) { %>
         <!-- Server Info Card -->
         <div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8">
-            <h1 class="text-3xl font-bold mb-6" id="server-name"></h1>
+            <h1 class="text-3xl font-bold mb-6" id="server-name">Server: Loading...</h1>
             
             <div class="space-y-4">
                 <div id="server-info" class="space-y-4">
                     <div class="flex items-center space-x-2">
                         <span class="text-gray-300">Status:</span>
-                        <span class="px-3 py-1 rounded-full text-sm font-medium status"></span>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium status">Loading...</span>
                     </div>
                     <div class="grid grid-cols-3 gap-4">
                         <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
                             <div class="text-gray-400 text-sm">Players</div>
-                            <div class="text-xl font-semibold players"></div>
+                            <div class="text-xl font-semibold players">Loading...</div>
                         </div>
                         <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
                             <div class="text-gray-400 text-sm">RAM</div>
-                            <div class="text-xl font-semibold ram"></div>
+                            <div class="text-xl font-semibold ram">Loading...</div>
                         </div>
                         <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
                             <div class="text-gray-400 text-sm">Version</div>
-                            <div class="text-xl font-semibold version"></div>
+                            <div class="text-xl font-semibold version">Loading...</div>
                         </div>
                     </div>
                 </div>
@@ -98,6 +84,7 @@
                 </div>
             </div>
         </div>
+        <% } %>
 
         <!-- Alert container -->
         <div id="alert-container" class="fixed inset-0 flex items-center justify-center hidden z-50">
@@ -275,10 +262,11 @@ const oHttp = {
 }
 
 // Variables
+<% if (req.path.startsWith('/server/')) { %>
 let serverData = {};
-let userData = {};
 const serverId = window.location.pathname.split('/')[2];
-let updateInterval;
+<% } %>
+let userData = {};
 let userId = null;
 let credits = null;
 
@@ -429,6 +417,31 @@ function showConfirm(message) {
     });
 }
 
+const eventSystem = {
+    listeners: new Map(),
+    
+    on(event, callback) {
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, new Set());
+        }
+        this.listeners.get(event).add(callback);
+        return () => this.off(event, callback);
+    },
+    
+    off(event, callback) {
+        if (this.listeners.has(event)) {
+            this.listeners.get(event).delete(callback);
+        }
+    },
+    
+    emit(event, data) {
+        if (this.listeners.has(event)) {
+            this.listeners.get(event).forEach(callback => callback(data));
+        }
+    }
+};
+
+<% if (req.path.startsWith('/server/')) { %>
 // Info card
 function updateDOM() {
     const server = serverData;
@@ -472,30 +485,6 @@ function updateDOM() {
     document.querySelector('.ram').textContent = `${(server.max_ram / 1024).toFixed(1)} GB`;
     document.querySelector('.version').textContent = server.server_version?.version || 'Unknown';
 }
-
-const eventSystem = {
-    listeners: new Map(),
-    
-    on(event, callback) {
-        if (!this.listeners.has(event)) {
-            this.listeners.set(event, new Set());
-        }
-        this.listeners.get(event).add(callback);
-        return () => this.off(event, callback);
-    },
-    
-    off(event, callback) {
-        if (this.listeners.has(event)) {
-            this.listeners.get(event).delete(callback);
-        }
-    },
-    
-    emit(event, data) {
-        if (this.listeners.has(event)) {
-            this.listeners.get(event).forEach(callback => callback(data));
-        }
-    }
-};
 
 async function updateServerInfo() {
     try {
@@ -666,6 +655,7 @@ async function resetProps(hideAlert = false) {
         console.error('Failed to reset server properties:', error);
     }
 }
+<% } %>
 
 async function updateUserInfo() {
     try {
@@ -707,15 +697,35 @@ eventSystem.on('creditUpdate', (credits) => {
     document.getElementById('userCredits').innerText = credits;
 });
 
+function logout() {
+    document.cookie.split(";").forEach(cookie => {
+        document.cookie = cookie.split("=")[0] + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    });
+    window.location.href = '/';
+}
+
+<% if (req.path.startsWith('/server/')) { %>
 // Start updating server info
 updateServerInfo();
 updateInterval_Serverinfo = setInterval(updateServerInfo, 5000); // Update server info every 5 seconds
+<% } %>
 
 // Start updating user info
 updateUserInfo();
 updateInterval_Userinfo = setInterval(updateUserInfo, 15000); // Update user info every 15 seconds
 
+document.getElementById('userDropdownBtn').addEventListener('click', () => {
+    document.getElementById('userDropdown').classList.toggle('hidden');
+});
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#userDropdownBtn')) {
+        document.getElementById('userDropdown').classList.add('hidden');
+    }
+});
+
 // Export functions for global access
+<% if (req.path.startsWith('/server/')) { %>
 window.startServer = startServer;
 window.bootServer = bootServer;
 window.stopServer = stopServer;
@@ -724,8 +734,10 @@ window.hibernateServer = hibernateServer;
 window.updateServer = updateServer;
 window.upgradeServer = upgradeServer;
 window.resetProps = resetProps;
+<% } %>
 window.formatBytes = formatBytes;
 window.getCookie = getCookie;
+window.logout = logout;
 window.oHttp = oHttp;
 window.eventSystem = eventSystem;
 
@@ -741,12 +753,14 @@ window.prompt = showPrompt;
 window.confirm = showConfirm;
 
 // Export variables for global access
+<% if (req.path.startsWith('/server/')) { %>
 window.serverData = serverData;
 window.serverId = serverId;
+<% } %>
         </script>
 
         <!-- Dynamic content-->
-        <div id="dynamic_content" class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8"><%- include(page) %></div>
+        <div id="dynamic_content" class="<% if (req.path.startsWith('/server/')) { %>rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8<% } %>"><%- include(page) %></div>
     </div>
     <div hidden class="cursor"></div>
     <div hidden class="cursor-inner"></div>

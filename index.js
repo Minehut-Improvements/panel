@@ -133,25 +133,11 @@ const checkAuth = (req, res, next) => {
 };
 
 // Serve the main page
-app.get('/', checkAuth, async (req, res) => {
-    const minehutId = req.cookies.minehut_id;
-    const token = req.cookies.token;
-    const sessionId = req.cookies.sessionId;
-    const profileId = req.cookies.profile_id;
-    
-    try {
-        const response = await axios.get(`https://api.dev.minehut.com/servers/${minehutId}/all_data`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'accept-language': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-                'x-profile-id': profileId,  // Corrected to use profileId
-                'x-session-id': sessionId
-            }
-        });
-        res.render('server-list', { servers: response.data });
-    } catch (error) {
-        res.send('Error fetching servers');
-    }
+app.get('/', checkAuth, async (req, res) => {    
+    res.render('base', { 
+        page: 'server-list',
+        req: req
+    });
 });
 
 // API endpoint to fetch all data from Minehut
@@ -421,6 +407,7 @@ app.get('/server/:id', checkAuth, (req, res) => {
 app.get('/server/:id/console', checkAuth, (req, res) => {
     res.render('base', { 
         page: 'console',
+        req: req,
         serverId: req.params.id
     });
 });
@@ -428,6 +415,7 @@ app.get('/server/:id/console', checkAuth, (req, res) => {
 app.get('/server/:id/settings', checkAuth, (req, res) => {
     res.render('base', { 
         page: 'settings',
+        req: req,
         serverId: req.params.id
     });
 });
@@ -435,6 +423,7 @@ app.get('/server/:id/settings', checkAuth, (req, res) => {
 app.get('/server/:id/stats', checkAuth, (req, res) => {
     res.render('base', { 
         page: 'stats',
+        req: req,
         serverId: req.params.id
     });
 });
@@ -442,7 +431,15 @@ app.get('/server/:id/stats', checkAuth, (req, res) => {
 app.get('/server/:id/files', checkAuth, (req, res) => {
     res.render('base', { 
         page: 'file',
+        req: req,
         serverId: req.params.id
+    });
+});
+
+app.get('/user', checkAuth, (req, res) => {
+    res.render('base', { 
+        page: 'user',
+        req: req
     });
 });
 
