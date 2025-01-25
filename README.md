@@ -35,13 +35,13 @@ We will allow you to use credits that you already have (buying ranks, server pla
 
 # TODO:
 ### In order of priority:
-- Add MOTD changer. (Implemented but broken) 🟡
+- Add MOTD changer. ✅
 - Show SFTP info. ✅
 - Add better version switcher. 🔴
 - Add external domain support. 🔴
 - Add better plan switcher. 🔴
 - Add re-ordering servers. 🔴
-- Add renaming servers. 🔴
+- Add renaming servers. ✅
 - Add server discovery settings. 🟡 (Only visibilities were implemented.)
 - Add backup support. 🔴
 - Add user page (minecraft / GS linking, transaction log, etc). 🔴
