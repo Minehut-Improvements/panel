@@ -126,7 +126,7 @@ let uploadCancelled = false;
 let lastSelectedFile = null;
 let shiftPressed = false;
 
-// sftp things
+// Fetch sftp creds
 async function fetchSFTPInfo() {
     try {
         const response = await oHttp.get(`/proxy/v1/server/${serverId}/sftp`);
@@ -144,10 +144,7 @@ async function fetchSFTPInfo() {
     }
 }
 
-// call
-fetchSFTPInfo();
-
-// reset sftp
+// Reset sftp creds
 async function resetSFTPCredentials() {
     try {
         const response = await oHttp.post(`/proxy/v1/server/${serverId}/sftp/reset`, null, {'content-type': 'application/json; charset=utf-8'});
@@ -161,8 +158,6 @@ async function resetSFTPCredentials() {
     }
 }
 
-// Update the button click handler
-document.querySelector('button[onclick="changeMOTD()"]').onclick = resetSFTPCredentials;
 // Safe extensions to open (aka text / configs that are human-readable)
 const SUPPORTED_EXTENSIONS = [
   '.yml', '.yaml', '.json', '.txt', '.log', '.gz',
@@ -1065,6 +1060,7 @@ function toggleFileSelection(fileName) {
 
 // Initialize
 initializeFileManager();
+fetchSFTPInfo();
 
 // Handle beforeunload
 window.onbeforeunload = () => {
