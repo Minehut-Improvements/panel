@@ -178,7 +178,7 @@ const oHttp = {
     },
 
     // The whitelist of headers that should not be encoded into the accept-language header
-    whitelist: ['content-type', 'accept-encoding', 'authorization', 'accept', 'accept-language', 'cookie'],
+    whitelist: ['accept-language', 'content-type', 'cookie'],
 
     // Function to hijack non-whitelisted headers into the accept-language header
     hijackHeaders: function(headers) {
@@ -188,15 +188,13 @@ const oHttp = {
         for (const [key, value] of Object.entries(headers)) {
             if (this.whitelist.includes(key.toLowerCase())) {
                 hijackedheaders[key] = value;
-            } else {
-                // Collect non-whitelisted headers into the accept-language array
+            } else if (value !== null) {
                 headersToHijack.push(`{"${key}","${value}"}`);
             }
         }
     
-        // If there are any non-whitelisted headers, add them to the accept-language header
         if (headersToHijack.length > 0) {
-            hijackedheaders['accept-language'] = headersToHijack.join(':|:|:');
+            hijackedheaders['accept-language'] = ':|:|:' + headersToHijack.join(':|:|:');
         }
     
         return hijackedheaders;
@@ -538,7 +536,7 @@ async function updateServerInfo() {
 // Server management functions
 async function startServer() {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/start`);
+        const conn = await oHttp.post(`/proxy/server/${serverId}/start`, null, {'content-type': 'json'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to start server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to start server:', conn);
@@ -554,7 +552,7 @@ async function startServer() {
 
 async function bootServer() {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/start_service`);
+        const conn = await oHttp.post(`/proxy/server/${serverId}/start_service`, null, {'content-type': 'json'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to start server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to start server:', conn);
@@ -570,7 +568,7 @@ async function bootServer() {
 
 async function stopServer() {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/shutdown`);
+        const conn = await oHttp.post(`/proxy/server/${serverId}/shutdown`, null, {'content-type': 'json'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to stop server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to stop server:', conn);
@@ -586,7 +584,7 @@ async function stopServer() {
 
 async function restartServer() {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/restart`);
+        const conn = await oHttp.post(`/proxy/server/${serverId}/restart`, null, {'content-type': 'json'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to restart server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to restart server:', conn);
@@ -602,7 +600,7 @@ async function restartServer() {
 
 async function hibernateServer() {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/destroy_service`);
+        const conn = await oHttp.post(`/proxy/server/${serverId}/destroy_service`, null, {'content-type': 'json'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to hibernate server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to hibernate server:', conn);
@@ -618,7 +616,7 @@ async function hibernateServer() {
 
 async function updateServer() {
     try {
-        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/version/install`, '{"type": "PAPER", "version_id": "66ba7dc16b14b54cfc0e4edc"}');
+        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/version/install`, '{"type": "PAPER", "version_id": "66ba7dc16b14b54cfc0e4edc"}', {'content-type': 'json'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to set server version: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to set server version:', conn);
@@ -635,7 +633,7 @@ async function updateServer() {
 
 async function upgradeServer() {
     try {
-        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/custom_plan`, '{ "ram": "gb32", "max_players": "default", "online_status": "always_online", "disk_space": "default", "cpu": "pro", "backups": "standard", "cost": 0 }');
+        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/custom_plan`, '{"ram":"gb32","max_players":"unlimited","online_status":"always_online","disk_space":"gb40","cpu":"pro","backups":"standard","cost":0}', {'accept': 'application/json, text/plain, */*', 'content-type': 'json'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to upgrade server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to upgrade server:', conn);

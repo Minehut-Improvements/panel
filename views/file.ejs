@@ -724,6 +724,8 @@ async function uploadFileWithChunks(file) {
     } catch (error) {
         console.error(error);
         errorAlert(`Failed to upload ${file.name}`);
+        uploadCancelled = true;
+        document.getElementById('upload-modal').classList.add('hidden');
         throw error;
     }
 }

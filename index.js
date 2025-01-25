@@ -352,6 +352,28 @@ app.ws('/proxy/server/:id/console', function (ws, req) {
     });
 });
 
+function processHeaders(req) {
+    const priorityHeader = req.headers['accept-language'];
+    let headersToForward = {};
+
+    if (priorityHeader && priorityHeader.includes(':|:|:')) {
+        const headersToInclude = priorityHeader.split(':|:|:')
+            .filter(Boolean)
+            .map(header => {
+                const [key, value] = header.split(',').map(part => part.replace(/[{}"]/g, '').trim());
+                return { key, value };
+            });
+            
+        headersToInclude.forEach(({ key, value }) => {
+            if (value !== null && value !== undefined) {
+                headersToForward[key] = value;
+            }
+        });
+    }
+    
+    return headersToForward;
+}
+
 app.use('/proxy/*', async (req, res) => {
     const minehutId = req.cookies.minehut_id;
     const token = req.cookies.token;
@@ -362,18 +384,7 @@ app.use('/proxy/*', async (req, res) => {
         return res.status(401).send('Session expired. Please log in.');
     }
 
-    const priorityHeader = req.headers['accept-language'];
-    let headersToForward = {};
-
-    if (priorityHeader && priorityHeader.includes(':|:|:')) {
-        const headersToInclude = priorityHeader.split(':|:|:').map(header => {
-            const [key, value] = header.split(',').map(part => part.replace(/[{}"]/g, '').trim());
-            return { key, value };
-        });
-        headersToInclude.forEach(({ key, value }) => {
-            headersToForward[key] = value;
-        });
-    }
+    let headersToForward = processHeaders(req);
 
     let requestBody = req.body;
     if (Buffer.isBuffer(requestBody)) {
@@ -431,18 +442,7 @@ app.use('/manager/:id*', async (req, res) => {
         return res.status(401).json({ error: 'Session expired. Please log in.' });
     }
 
-    const priorityHeader = req.headers['accept-language'];
-    let headersToForward = {};
-
-    if (priorityHeader && priorityHeader.includes(':|:|:')) {
-        const headersToInclude = priorityHeader.split(':|:|:').map(header => {
-            const [key, value] = header.split(',').map(part => part.replace(/[{}"]/g, '').trim());
-            return { key, value };
-        });
-        headersToInclude.forEach(({ key, value }) => {
-            headersToForward[key] = value;
-        });
-    }
+    let headersToForward = processHeaders(req);
 
     let requestBody = req.body;
     if (Buffer.isBuffer(requestBody)) {
