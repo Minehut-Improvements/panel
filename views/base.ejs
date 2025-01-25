@@ -53,9 +53,11 @@
     </nav>
     <div class="container mx-auto px-4 py-8 max-w-[90%]">
         <% if (req.path.startsWith('/server/')) { %>
-        <!-- Server Info Card -->
-        <div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8">
-            <h1 class="text-3xl font-bold mb-6" id="server-name">Server: Loading...</h1>
+            <div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8">
+                <div class="mb-3">
+                    <h1 class="text-3xl font-bold mb-3" id="server-name">Server: Loading...</h1>
+                    <button class="rounded-lg px-3 py-1 bg-green-600 text-white text-sm cursor-pointer duration-200" onclick="showChangeServerName()">Change Server Name</button>
+                </div>
             
             <div class="space-y-4">
                 <div id="server-info" class="space-y-4">
@@ -667,6 +669,32 @@ async function resetProps(hideAlert = false) {
         console.error('Failed to reset server properties:', error);
     }
 }
+
+async function showChangeServerName() {
+    try {
+        const newName = await prompt('Enter new server name');
+        if (!newName) return; // User cancelled
+        const conn = await oHttp.post(`/proxy/server/${serverId}/change_name`, 
+            JSON.stringify({ name: newName }), 
+            {'content-type': 'application/json; charset=utf-8'}
+        );
+
+        if(conn.response.code != 200) {
+            errorAlert(`Failed to change server name: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`);
+            console.error('Failed to change server name:', conn);
+            return;
+        }
+
+        await updateServerInfo();
+        showAlert('Server name changed successfully!', 'info');
+    } catch (error) {
+        errorAlert(`Failed to change server name: ${JSON.stringify(error?.connection?.response?.body) || error?.message || 'Unknown error'}`);
+        console.error('Failed to change server name:', error);
+    }
+}
+
+// Add to the window exports
+window.showChangeServerName = showChangeServerName;
 //<% } %>
 
 async function updateUserInfo() {
