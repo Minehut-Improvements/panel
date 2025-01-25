@@ -993,10 +993,10 @@ function openSelected() {
     }
 }
 
-function openFile(path) {
+async function openFile(path) {
     const ext = path.substring(path.lastIndexOf('.')).toLowerCase();
     if (!SUPPORTED_EXTENSIONS.includes((ext ? ext : ''))) {
-      if (!confirm('This file type may not display correctly. Open anyway?')) {
+      if (!await confirm('This file type may not display correctly. Open anyway?')) {
         return;
       }
     }
@@ -1010,6 +1010,9 @@ async function closeEditor() {
     if (fileContentModified && !(await confirm('You have unsaved changes. Close anyway?'))) {
         return;
     }
+    const editor = document.getElementById('file-content');
+    editor.disabled = true;
+    editor.value = 'Loading...';
     document.getElementById('editor-overlay').classList.add('hidden');
     fileContentModified = false;
 }
