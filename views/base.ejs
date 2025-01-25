@@ -54,9 +54,18 @@
     <div class="container mx-auto px-4 py-8 max-w-[90%]">
         <% if (req.path.startsWith('/server/')) { %>
             <div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8">
-                <div class="mb-3">
-                    <h1 class="text-3xl font-bold mb-3" id="server-name">Server: Loading...</h1>
-                    <button class="rounded-lg px-3 py-1 bg-green-600 text-white text-sm cursor-pointer duration-200" onclick="showChangeServerName()">Change Server Name</button>
+                <div class="flex items-center gap-3 mb-3">
+                    <h1 class="text-3xl font-bold" id="server-name">Server: Loading...</h1>
+                    <div class="relative group">
+                        <button onclick="showChangeServerName()" class="rounded-lg p-2 bg-gray-800 bg-opacity-50 hover:bg-opacity-75 text-gray-300 transition-all duration-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                        <div class="absolute left-1/2 -translate-x-1/2 -bottom-8 hidden group-hover:block w-max px-2 py-1 bg-gray-800 text-sm text-gray-300 rounded">
+                            Change Server Name
+                        </div>
+                    </div>
                 </div>
             
             <div class="space-y-4">
@@ -84,13 +93,33 @@
                 <!-- Control Buttons -->
                 <div class="bg-gray-800 bg-opacity-50 rounded-lg p-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <button onclick="startServer()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Start</button>
-                        <button onclick="stopServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Stop</button>
-                        <button onclick="restartServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Restart</button>
-                        <button onclick="hibernateServer()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Hibernate</button>
-                        <button onclick="bootServer()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Un-Hibernate</button>
-                        <button onclick="updateServer()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Update Server</button>
-                        <button onclick="upgradeServer()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 w-full">Max Upgrades</button>
+                        <button onclick="startServer()" class="group relative w-full overflow-hidden rounded-lg bg-gradient-to-br from-green-400 to-green-600 p-0.5 transition-all hover:bg-gradient-to-br hover:from-green-500 hover:to-green-700">
+                            <span class="relative flex w-full items-center justify-center rounded-lg bg-gray-800 px-6 py-3 font-medium text-green-400 transition-all group-hover:bg-opacity-0 group-hover:text-white">Start</span>
+                        </button>
+                        
+                        <button onclick="stopServer()" class="group relative w-full overflow-hidden rounded-lg bg-gradient-to-br from-red-400 to-red-600 p-0.5 transition-all hover:bg-gradient-to-br hover:from-red-500 hover:to-red-700">
+                            <span class="relative flex w-full items-center justify-center rounded-lg bg-gray-800 px-6 py-3 font-medium text-red-400 transition-all group-hover:bg-opacity-0 group-hover:text-white">Stop</span>
+                        </button>
+                        
+                        <button onclick="restartServer()" class="group relative w-full overflow-hidden rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 p-0.5 transition-all hover:bg-gradient-to-br hover:from-yellow-500 hover:to-yellow-700">
+                            <span class="relative flex w-full items-center justify-center rounded-lg bg-gray-800 px-6 py-3 font-medium text-yellow-400 transition-all group-hover:bg-opacity-0 group-hover:text-white">Restart</span>
+                        </button>
+                        
+                        <button onclick="updateServer()" class="group relative w-full overflow-hidden rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 p-0.5 transition-all hover:bg-gradient-to-br hover:from-blue-500 hover:to-blue-700">
+                            <span class="relative flex w-full items-center justify-center rounded-lg bg-gray-800 px-6 py-3 font-medium text-blue-400 transition-all group-hover:bg-opacity-0 group-hover:text-white">Update Server</span>
+                        </button>
+                        
+                        <button onclick="bootServer()" class="group relative w-full overflow-hidden rounded-lg bg-gradient-to-br from-green-400 to-green-600 p-0.5 transition-all hover:bg-gradient-to-br hover:from-green-500 hover:to-green-700">
+                            <span class="relative flex w-full items-center justify-center rounded-lg bg-gray-800 px-6 py-3 font-medium text-green-400 transition-all group-hover:bg-opacity-0 group-hover:text-white">Un-Hibernate</span>
+                        </button>
+                        
+                        <button onclick="upgradeServer()" class="group relative w-full overflow-hidden rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 p-0.5 transition-all hover:bg-gradient-to-br hover:from-emerald-500 hover:to-emerald-700">
+                            <span class="relative flex w-full items-center justify-center rounded-lg bg-gray-800 px-6 py-3 font-medium text-emerald-400 transition-all group-hover:bg-opacity-0 group-hover:text-white">Max Upgrades</span>
+                        </button>
+                        
+                        <button onclick="hibernateServer()" class="group relative w-full overflow-hidden rounded-lg bg-gradient-to-br from-red-400 to-red-600 p-0.5 transition-all hover:bg-gradient-to-br hover:from-red-500 hover:to-red-700">
+                            <span class="relative flex w-full items-center justify-center rounded-lg bg-gray-800 px-6 py-3 font-medium text-red-400 transition-all group-hover:bg-opacity-0 group-hover:text-white">Hibernate</span>
+                        </button>
                     </div>
                 </div>
             </div>
