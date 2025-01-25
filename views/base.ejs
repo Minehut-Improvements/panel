@@ -166,7 +166,9 @@ const oHttp = {
         return {
             request: {
                 url: null,
-                type: null
+                type: null,
+                body: null,
+                headers: null
             },
             response: {
                 code: null,
@@ -204,6 +206,8 @@ const oHttp = {
         const conn = this.connection();
         conn.request.url = url;
         conn.request.type = type;
+        conn.request.body = body;
+        conn.request.headers = headers;
 
         try {
             const options = {
@@ -270,10 +274,10 @@ const oHttp = {
 }
 
 // Variables
-<% if (req.path.startsWith('/server/')) { %>
+//<% if (req.path.startsWith('/server/')) { %>
 let serverData = {};
 const serverId = window.location.pathname.split('/')[2];
-<% } %>
+//<% } %>
 let userData = {};
 let userId = null;
 let credits = null;
@@ -449,7 +453,7 @@ const eventSystem = {
     }
 };
 
-<% if (req.path.startsWith('/server/')) { %>
+//<% if (req.path.startsWith('/server/')) { %>
 // Info card
 function updateDOM() {
     const server = serverData;
@@ -536,7 +540,7 @@ async function updateServerInfo() {
 // Server management functions
 async function startServer() {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/start`, null, {'content-type': 'json'});
+        const conn = await oHttp.post(`/proxy/server/${serverId}/start`, null, {'content-type': 'application/json; charset=utf-8'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to start server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to start server:', conn);
@@ -552,7 +556,7 @@ async function startServer() {
 
 async function bootServer() {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/start_service`, null, {'content-type': 'json'});
+        const conn = await oHttp.post(`/proxy/server/${serverId}/start_service`, null, {'content-type': 'application/json; charset=utf-8'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to start server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to start server:', conn);
@@ -568,7 +572,7 @@ async function bootServer() {
 
 async function stopServer() {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/shutdown`, null, {'content-type': 'json'});
+        const conn = await oHttp.post(`/proxy/server/${serverId}/shutdown`, null, {'content-type': 'application/json; charset=utf-8'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to stop server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to stop server:', conn);
@@ -584,7 +588,7 @@ async function stopServer() {
 
 async function restartServer() {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/restart`, null, {'content-type': 'json'});
+        const conn = await oHttp.post(`/proxy/server/${serverId}/restart`, null, {'content-type': 'application/json; charset=utf-8'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to restart server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to restart server:', conn);
@@ -600,7 +604,7 @@ async function restartServer() {
 
 async function hibernateServer() {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/destroy_service`, null, {'content-type': 'json'});
+        const conn = await oHttp.post(`/proxy/server/${serverId}/destroy_service`, null, {'content-type': 'application/json; charset=utf-8'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to hibernate server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to hibernate server:', conn);
@@ -616,7 +620,7 @@ async function hibernateServer() {
 
 async function updateServer() {
     try {
-        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/version/install`, '{"type": "PAPER", "version_id": "66ba7dc16b14b54cfc0e4edc"}', {'content-type': 'json'});
+        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/version/install`, '{"type": "PAPER", "version_id": "66ba7dc16b14b54cfc0e4edc"}', {'content-type': 'application/json; charset=utf-8'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to set server version: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to set server version:', conn);
@@ -633,7 +637,7 @@ async function updateServer() {
 
 async function upgradeServer() {
     try {
-        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/custom_plan`, '{"ram":"gb32","max_players":"unlimited","online_status":"always_online","disk_space":"gb40","cpu":"pro","backups":"standard","cost":0}', {'accept': 'application/json, text/plain, */*', 'content-type': 'json'});
+        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/custom_plan`, '{"ram":"gb32","max_players":"unlimited","online_status":"always_online","disk_space":"default","cpu":"pro","backups":"standard","cost":0}', {'content-type': 'application/json; charset=utf-8'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to upgrade server: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to upgrade server:', conn);
@@ -649,7 +653,7 @@ async function upgradeServer() {
 
 async function resetProps(hideAlert = false) {
     try {
-        const conn = await oHttp.post(`/proxy/server/${serverId}/edit_server_properties`, '{"serverProperties":{"max-players":10,"view-distance":6,"gamemode":"survival","difficulty":"easy","spawn-mobs":true,"spawn-animals":true,"force-gamemode":false,"level-type":"default","spawn-npcs":true,"allow-nether":true,"pvp":true,"allow-flight":false,"spawn-protection":16,"announce-player-achievements":true,"enable-command-block":false,"require-resource-pack":false,"hardcore":false,"level-name":"world","max-tick-time":60000,"resource-pack-prompt":"","op-permission-level":4,"entity-broadcast-range-percentage":100,"white-list":false,"snooper-enabled":true,"enforce-whitelist":false,"max-world-size":29999984}}');
+        const conn = await oHttp.post(`/proxy/server/${serverId}/edit_server_properties`, '{"serverProperties":{"max-players":10,"view-distance":6,"gamemode":"survival","difficulty":"easy","spawn-mobs":true,"spawn-animals":true,"force-gamemode":false,"level-type":"default","spawn-npcs":true,"allow-nether":true,"pvp":true,"allow-flight":false,"spawn-protection":16,"announce-player-achievements":true,"enable-command-block":false,"require-resource-pack":false,"hardcore":false,"level-name":"world","max-tick-time":60000,"resource-pack-prompt":"","op-permission-level":4,"entity-broadcast-range-percentage":100,"white-list":false,"snooper-enabled":true,"enforce-whitelist":false,"max-world-size":29999984}}', {'content-type': 'application/json; charset=utf-8'});
         if(conn.response.code != 200) {
             errorAlert(`Failed to reset server properties: ${JSON.stringify(conn?.response?.body) || 'Unknown error'}`)
             console.error('Failed to reset server properties:', conn);
@@ -663,7 +667,7 @@ async function resetProps(hideAlert = false) {
         console.error('Failed to reset server properties:', error);
     }
 }
-<% } %>
+//<% } %>
 
 async function updateUserInfo() {
     try {
@@ -712,11 +716,11 @@ function logout() {
     window.location.href = '/';
 }
 
-<% if (req.path.startsWith('/server/')) { %>
+//<% if (req.path.startsWith('/server/')) { %>
 // Start updating server info
 updateServerInfo();
 updateInterval_Serverinfo = setInterval(updateServerInfo, 5000); // Update server info every 5 seconds
-<% } %>
+//<% } %>
 
 // Start updating user info
 updateUserInfo();
@@ -771,7 +775,7 @@ if (path === '/') {
 }
 
 // Export functions for global access
-<% if (req.path.startsWith('/server/')) { %>
+//<% if (req.path.startsWith('/server/')) { %>
 window.startServer = startServer;
 window.bootServer = bootServer;
 window.stopServer = stopServer;
@@ -780,7 +784,7 @@ window.hibernateServer = hibernateServer;
 window.updateServer = updateServer;
 window.upgradeServer = upgradeServer;
 window.resetProps = resetProps;
-<% } %>
+//<% } %>
 window.formatBytes = formatBytes;
 window.getCookie = getCookie;
 window.logout = logout;
@@ -799,10 +803,10 @@ window.prompt = showPrompt;
 window.confirm = showConfirm;
 
 // Export variables for global access
-<% if (req.path.startsWith('/server/')) { %>
+//<% if (req.path.startsWith('/server/')) { %>
 window.serverData = serverData;
 window.serverId = serverId;
-<% } %>
+//<% } %>
         </script>
 
         <!-- Dynamic content-->

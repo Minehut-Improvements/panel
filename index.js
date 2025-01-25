@@ -11,7 +11,9 @@ const oHttp = {
         return {
             request: {
                 url: null,
-                type: null
+                type: null,
+                body: null,
+                headers: null
             },
             response: {
                 code: null,
@@ -26,6 +28,8 @@ const oHttp = {
         const conn = this.connection();
         conn.request.url = url;
         conn.request.type = type;
+        conn.request.body = body;
+        conn.request.headers = headers;
 
         try {
             const options = {
@@ -393,7 +397,7 @@ app.use('/proxy/*', async (req, res) => {
 
     if (req.is('json') && requestBody) {
         try {
-            requestBody = JSON.parse(requestBody);
+            requestBody = JSON.stringify(JSON.parse(requestBody));
         } catch (e) {
             return res.status(400).json({ error: 'Invalid JSON in request body', details: e.message });
         }
@@ -406,7 +410,7 @@ app.use('/proxy/*', async (req, res) => {
             req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : null,
             {
                 ...headersToForward,
-                'Content-Type': req.headers['content-type'] || 'application/json',
+                'content-type': req.headers['content-type'] || 'application/json',
                 Authorization: `Bearer ${token}`,
                 'x-profile-id': profileId,
                 'x-session-id': sessionId 
@@ -437,9 +441,9 @@ app.use('/manager/:id*', async (req, res) => {
     const token = req.cookies.token;
     const sessionId = req.cookies.sessionId;
     const profileId = req.cookies.profile_id;
-
+    
     if (!minehutId || !token || !sessionId || !profileId) {
-        return res.status(401).json({ error: 'Session expired. Please log in.' });
+        return res.status(401).send('Session expired. Please log in.');
     }
 
     let headersToForward = processHeaders(req);
@@ -451,24 +455,24 @@ app.use('/manager/:id*', async (req, res) => {
 
     if (req.is('json') && requestBody) {
         try {
-            requestBody = JSON.parse(requestBody);
+            requestBody = JSON.stringify(JSON.parse(requestBody));
         } catch (e) {
             return res.status(400).json({ error: 'Invalid JSON in request body', details: e.message });
         }
     }
-
+    
     try {
         const conn = await oHttp.other(
             `https://${req.params.id}.manager.dev.minehut.com${req.originalUrl.replace(`/manager/${req.params.id}`, '')}`,
             req.method,
+            req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : null,
             {
                 ...headersToForward,
-                'Content-Type': req.headers['content-type'] || 'application/json',
+                'content-type': req.headers['content-type'] || 'application/json',
                 Authorization: `Bearer ${token}`,
                 'x-profile-id': profileId,
                 'x-session-id': sessionId 
-            },
-            req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' ? requestBody : null
+            }
         );
         const response = conn.response;
 

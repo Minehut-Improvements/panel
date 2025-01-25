@@ -121,7 +121,7 @@ async function updateVisibility() {
     try {
         const visibilityValue = document.getElementById('visibility').value === 'true' ? 1 : 0;
         const payload = JSON.stringify({ visibility: visibilityValue });
-        await oHttp.post(`/proxy/server/${serverId}/visibility`, payload);
+        await oHttp.post(`/proxy/server/${serverId}/visibility`, payload, {'content-type': 'application/json; charset=utf-8'});
         alert('Visibility updated successfully');
     } catch (error) {
         errorAlert(`Failed to update visibility: ${error.connection?.response?.body || 'Unknown error'}`);
@@ -143,7 +143,7 @@ async function fetchMOTD() {
 async function changeMOTD() {
     try {
         const motd = document.getElementById('motd-input').value;
-        await oHttp.post(`/proxy/server/${serverId}/change_motd`, { motd });
+        await oHttp.post(`/proxy/server/${serverId}/change_motd`, motd, {'content-type': 'application/json; charset=utf-8'});
         alert('MOTD updated successfully');
     } catch (error) {
         errorAlert(`Failed to update MOTD: ${error.connection?.response?.body || 'Unknown error'}`);
@@ -194,7 +194,7 @@ async function createPort() {
         const portInput = document.getElementById('new-port-input');
         const in_port = parseInt(portInput.value, 10);
         let type = 'TCP';
-        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/port`, { serverId: serverId, type, in_port });
+        const conn = await oHttp.post(`/proxy/v1/server/${serverId}/port`, { serverId: serverId, type, in_port }, {'content-type': 'application/json; charset=utf-8'});
         alert('Port created successfully: ' + conn.response.body.port);
         window.location.reload();
     } catch (error) {
@@ -205,7 +205,7 @@ async function createPort() {
 
 async function deletePort(portId) {
     try {
-        await oHttp.delete(`/proxy/v1/server/${serverId}/port/${portId}`);
+        await oHttp.delete(`/proxy/v1/server/${serverId}/port/${portId}`, {'content-type': 'application/json; charset=utf-8'});
         alert('Port deleted successfully');
         window.location.reload();
     } catch (error) {
@@ -297,7 +297,7 @@ function updateServerPort(portId, in_port) {
             in_port: in_port
         });
     
-        oHttp.patch(url, payload).then(loadPorts());
+        oHttp.patch(url, payload, {'content-type': 'application/json; charset=utf-8'}).then(loadPorts());
     }
     catch (error) {
         errorAlert(`Failed to update port: ${error.connection?.response?.body || 'Unknown error'}`)
@@ -457,7 +457,8 @@ async function submitProperties(e) {
         await oHttp.other(
             `/proxy/server/${serverId}/${editMode}_server_properties`,
             editMode === 'edit' ? 'POST' : 'PATCH',
-            JSON.stringify({ serverProperties: properties })
+            JSON.stringify({ serverProperties: properties }),
+            {'content-type': 'application/json; charset=utf-8'}
         );
         await restartServer();
         alert('Properties updated successfully');

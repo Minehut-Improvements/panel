@@ -150,7 +150,7 @@ fetchSFTPInfo();
 // reset sftp
 async function resetSFTPCredentials() {
     try {
-        const response = await oHttp.post(`/proxy/v1/server/${serverId}/sftp/reset`);
+        const response = await oHttp.post(`/proxy/v1/server/${serverId}/sftp/reset`, null, {'content-type': 'application/json; charset=utf-8'});
         if (response.response.code !== 200) throw new Error('Failed to reset SFTP credentials');
 
         await fetchSFTPInfo();
@@ -659,7 +659,7 @@ async function saveFile() {
         const response = await oHttp.post(
             `/proxy/file/${serverId}/edit/${currentFile}`, 
             JSON.stringify({ content }),
-            { 'content-type': 'application/json' }
+            {'content-type': 'application/json; charset=utf-8'}
         );
         
         if (response.response.code !== 200) throw new Error('Failed to save file');
@@ -707,7 +707,8 @@ async function uploadFileWithChunks(file) {
             const headers = {
                 'Upload-Id': uploadId,
                 'Upload-Chunk-Number': chunkCount,
-                'Upload-Chunk-Total': totalChunks
+                'Upload-Chunk-Total': totalChunks,
+                'content-type': 'application/json; charset=utf-8'
             };
 
             const response = await oHttp.post(
@@ -780,7 +781,8 @@ async function deleteSelected() {
             `/proxy/file/${serverId}/delete`,
             JSON.stringify({
                 files: [selectedFiles]
-            })
+            }),
+            {'content-type': 'application/json; charset=utf-8'}
         );
         if (response.response.code !== 200) throw new Error('Delete failed');
     } catch (error) {
@@ -805,7 +807,7 @@ async function renameSelected() {
         const response = await oHttp.post(
             `/proxy/file/${serverId}/rename/${currentPath}`,
             JSON.stringify({ name: cleanPath(currentPath + '/' + newName) }),
-            { 'content-type': 'application/json' }
+            {'content-type': 'application/json; charset=utf-8'}
         );
         
         if (response.response.code !== 200) throw new Error('Rename failed');
@@ -838,7 +840,7 @@ async function moveFile(fileName, targetPath) {
                 movePath: destPath,
                 overwrite: true
             }),
-            { 'content-type': 'application/json' }
+            {'content-type': 'application/json; charset=utf-8'}
         );
         
         if (response.response.code !== 200) throw new Error('Move failed');
@@ -867,7 +869,7 @@ async function copyFile(fileName, targetPath) {
                 copyPath: destPath,
                 overwrite: true
             }),
-            { 'content-type': 'application/json' }
+            {'content-type': 'application/json; charset=utf-8'}
         );
         
         if (response.response.code !== 200) throw new Error('Copy failed');
@@ -931,7 +933,7 @@ async function unzipSelected() {
         const response = await oHttp.post(
             `/proxy/file/${serverId}/unzip/${cleanPath(currentPath + '/' + fileName)}`,
             {},
-            { 'content-type': 'application/json' }
+            {'content-type': 'application/json; charset=utf-8'}
         );
         
         if (response.response.code !== 200) throw new Error('Extraction failed');
@@ -950,7 +952,7 @@ async function createFolder() {
         const response = await oHttp.post(
             `/proxy/file/${serverId}/folder/create`,
             JSON.stringify({ name: name, directory: currentPath }),
-            { 'content-type': 'application/json' }
+            {'content-type': 'application/json; charset=utf-8'}
         );
         
         if (response.response.code !== 200) throw new Error('Failed to create folder');
