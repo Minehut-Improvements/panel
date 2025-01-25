@@ -21,8 +21,8 @@
             <form class="max-w-sm">
                 <a class="block text-sm font-medium text-gray-400 mb-1">Visibility</a>
                 <select id="visibility" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <option value="true" selected>Visible</option>
-                    <option value="false">Not Visible</option>
+                    <option id="visibility_visible" value="true">Visible</option>
+                    <option id="visibility_invisible" value="false">Not Visible</option>
                 </select>
             </form>
             <button onclick="updateVisibility()" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105">
@@ -105,6 +105,16 @@
 const MAX_PORTS = 2; // Seems to be the maximum amount of ports any server can have
 let isAdvancedMode = false;
 let serverProperties = {};
+
+function renderVisibility() {
+    const visible = document.getElementById('visibility_visible');
+    const invisible = document.getElementById('visibility_invisible');
+    if(serverData.visibility) {
+        visible.selected = true;
+    } else {
+        invisible.selected = true;
+    }
+}
 
 // Update Visibility state
 async function updateVisibility() {
@@ -466,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 eventSystem.on('propertiesUpdate', () => {
     renderPropertiesForm();
+    renderVisibility();
 });
 
 // Call this when the page loads

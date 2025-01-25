@@ -167,17 +167,18 @@ async function createServer() {
     }
 
     try {
-        const response = await oHttp.post('/proxy/servers/create', JSON.stringify({
+        const conn = await oHttp.post('/proxy/servers/create', JSON.stringify({
             platform: 'java',
             name: name,
             type: 'PAPER',
             version: '66ba7dc16b14b54cfc0e4edc'
         }));
 
-        if (response.response.code === 200) {
+        if (conn.response.code === 200) {
             location.reload();
         } else {
-            console.error('Failed to create server:', response);
+            errorAlert(`Failed to create server: ${JSON.stringify(conn?.response?.body)}` || 'Unknown error while creating server')
+            console.error('Failed to create server:', conn);
         }
     } catch (error) {
         console.error('Error creating server:', error);

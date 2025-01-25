@@ -475,15 +475,15 @@ app.use('/manager/:id*', async (req, res) => {
         return res.status(response.status).json(response.body);
     } catch (error) {
         console.log(error);
-        if (error.conn?.response?.data?.expired) {
-            res.clearCookie('minehut_id');
-            res.clearCookie('token');
-            res.clearCookie('sessionId');
-            res.clearCookie('profile_id');
-            return res.status(401).json({ error: 'Session expired. Please log in again.' });
-        }
-        if (error.conn.response) {
-            return res.status(error.conn.response.status).json(error.conn.response.body);
+        if (error.conn) {
+            if (error.conn?.response?.data?.expired) {
+                res.clearCookie('minehut_id');
+                res.clearCookie('token');
+                res.clearCookie('sessionId');
+                res.clearCookie('profile_id');
+                return res.status(401).json({ error: 'Session expired. Please log in again.' });
+            }
+            return res.status(error.conn.response.status ? error.conn.response.status : 400 ).json(error.conn.response.body);
         }
         return res.status(500).json({ error: error.message || 'An unknown error occurred' });
     }
