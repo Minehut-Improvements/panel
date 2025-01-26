@@ -748,7 +748,8 @@ async function updateUserInfo() {
                 window.location.href = "/";
                 return;
             }
-            throw new Error(`API returned status ${response.response.code}`);
+            console.error('Failed to fetch user data:', conn);
+            return;
         }
 
         const prevUserData = userData;
@@ -764,7 +765,6 @@ async function updateUserInfo() {
         }
     } catch (error) {
         console.error('Failed to fetch user data:', error);
-        document.getElementById('userCredits').innerText = 'Error';
     }
 }
 
