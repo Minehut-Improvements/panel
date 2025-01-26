@@ -46,11 +46,21 @@ const oHttp = {
             }
 
             const response = await fetch(url, options);
-            const responseData = await response.json();
+            const rawResponse = response.clone();
+            
+            let responseData;
+            const jsonResponse = response.clone();
+            
+            try {
+                responseData = await jsonResponse.json();
+            } catch (error) {
+                responseData = await response.text();
+            }
 
             conn.response.code = response.status;
             conn.response.status = response.status;
             conn.response.body = responseData;
+            conn.response.raw = rawResponse;
             conn.response.connection = response;
 
             return conn;
@@ -58,7 +68,6 @@ const oHttp = {
             throw {
                 error: error,
                 message: error.message,
-                connection: error.connection,
                 conn: error.conn
             };
         }
