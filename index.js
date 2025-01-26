@@ -47,7 +47,7 @@ const oHttp = {
 
             const response = await fetch(url, options);
             const rawResponse = response.clone();
-            
+
             let responseData;
             const jsonResponse = response.clone();
             
@@ -215,7 +215,7 @@ const checkAuth = (req, res, next) => {
                 <h3>Step 2: Log In</h3>
                 <p>
                     Log in from 
-                    <a href="https://gqgn0edrg67vnqh.minehut.app/" target="_blank">
+                    <a href="https://gqgn0edrg67vnqh.minehut.app/?refer=dev" target="_blank">
                         Minehut's login page
                     </a>.
                 </p>
