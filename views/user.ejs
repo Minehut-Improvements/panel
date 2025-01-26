@@ -1,9 +1,504 @@
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-2xl mx-auto bg-gray-900/90 rounded-xl border border-gray-700 p-6">
-        <h1 class="text-2xl font-bold mb-6">Account Settings</h1>
-        <div class="space-y-4">
-            <!-- TODO: Add user account settings here -->
-            <p class="text-gray-300">Account management options will go here</p>
+<div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8">
+    <div class="flex items-center gap-3 mb-3">
+        <h1 class="text-3xl font-bold">Account Management</h1>
+    </div>
+
+    <div class="flex space-x-4 mb-4">
+        <button class="tab-button px-4 py-2 rounded-lg font-medium text-white active bg-blue-600" onclick="switchTab('account')">Account</button>
+        <button class="tab-button px-4 py-2 rounded-lg font-medium bg-gray-800 text-white" onclick="switchTab('servers')">Servers</button>
+    </div>
+
+    <div id="account-tab" class="tab-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Email</label>
+                    <input type="email" id="emailInput" class="w-full p-3 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg text-white" readonly>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Username</label>
+                    <input type="text" id="usernameInput" class="w-full p-3 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg text-white" readonly>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Minecraft Account</label>
+                    <div id="mcAccountStatus" class="mb-4">Loading...</div>
+                    <div class="flex gap-2">
+                        <button onclick="linkMC()" id="linkMCBtn" class="group relative w-full overflow-hidden rounded-lg bg-gradient-to-br from-green-400 to-green-600 p-0.5 transition-all hover:bg-gradient-to-br hover:from-green-500 hover:to-green-700">
+                            <span class="relative flex w-full items-center justify-center rounded-lg bg-gray-800 px-6 py-3 font-medium text-green-400 transition-all group-hover:bg-opacity-0 group-hover:text-white">Link Account</span>
+                        </button>
+                        <button onclick="unlinkMC()" id="unlinkMCBtn" class="hidden group relative w-full overflow-hidden rounded-lg bg-gradient-to-br from-red-400 to-red-600 p-0.5 transition-all hover:bg-gradient-to-br hover:from-red-500 hover:to-red-700">
+                            <span class="relative flex w-full items-center justify-center rounded-lg bg-gray-800 px-6 py-3 font-medium text-red-400 transition-all group-hover:bg-opacity-0 group-hover:text-white">Unlink Account</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div id="accountInfo"></div>
+                <button onclick="viewGDPR()" class="group relative w-full overflow-hidden rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 p-0.5 transition-all hover:bg-gradient-to-br hover:from-blue-500 hover:to-blue-700">
+                    <span class="relative flex w-full items-center justify-center rounded-lg bg-gray-800 px-6 py-3 font-medium text-blue-400 transition-all group-hover:bg-opacity-0 group-hover:text-white">View GDPR Data</span>
+                </button>
+            </div>
         </div>
     </div>
+
+    <div id="servers-tab" class="tab-content hidden">
+        <div id="serversList" class="space-y-4"></div>
+    </div>
 </div>
+
+<!-- Credit History -->
+<div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6 mb-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+        <h2 class="text-2xl font-bold">Credit History</h2>
+        <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+            <input type="text" id="creditSearch" placeholder="Search..." class="w-full md:w-64 p-2 bg-gray-800 rounded-lg border border-gray-600">
+            <select id="creditSort" class="bg-gray-800 p-2 rounded-lg border border-gray-600">
+                <option value="date">Date</option>
+                <option value="credits">Credits</option>
+                <option value="type">Type</option>
+            </select>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gray-800">
+                    <th class="px-6 py-4 font-semibold text-left">Date</th>
+                    <th class="px-6 py-4 font-semibold text-left">Amount</th>
+                    <th class="px-6 py-4 font-semibold text-left">Description</th>
+                    <th class="px-6 py-4 font-semibold text-left">Type</th>
+                </tr>
+            </thead>
+            <tbody id="creditHistory"></tbody>
+        </table>
+    </div>
+    <div class="flex justify-between items-center mt-4">
+        <button id="creditPrevPage" class="px-4 py-2 bg-gray-800 rounded-lg disabled:opacity-50">Previous</button>
+        <span id="creditPageInfo">Page 1</span>
+        <button id="creditNextPage" class="px-4 py-2 bg-gray-800 rounded-lg disabled:opacity-50">Next</button>
+    </div>
+</div>
+
+<!-- Payment History -->
+<div class="rounded-xl overflow-hidden bg-[rgba(17,25,40,0.75)] border border-[rgba(255,255,255,0.125)] p-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+        <h2 class="text-2xl font-bold">Payment History</h2>
+        <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+            <input type="text" id="paymentSearch" placeholder="Search..." class="w-full md:w-64 p-2 bg-gray-800 rounded-lg border border-gray-600">
+            <select id="paymentSort" class="bg-gray-800 p-2 rounded-lg border border-gray-600">
+                <option value="date">Date</option>
+                <option value="credits">Credits</option>
+                <option value="type">Type</option>
+            </select>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gray-800">
+                    <th class="px-6 py-4 font-semibold text-left">Date</th>
+                    <th class="px-6 py-4 font-semibold text-left">Amount</th>
+                    <th class="px-6 py-4 font-semibold text-left">Type</th>
+                    <th class="px-6 py-4 font-semibold text-left">Credits</th>
+                </tr>
+            </thead>
+            <tbody id="paymentHistory"></tbody>
+        </table>
+    </div>
+    <div class="flex justify-between items-center mt-4">
+        <button id="paymentPrevPage" class="px-4 py-2 bg-gray-800 rounded-lg disabled:opacity-50">Previous</button>
+        <span id="paymentPageInfo">Page 1</span>
+        <button id="paymentNextPage" class="px-4 py-2 bg-gray-800 rounded-lg disabled:opacity-50">Next</button>
+    </div>
+</div>
+
+<script>
+async function initializeUser() {
+    if (!userId) {
+        window.location.href = "/";
+        return;
+    }
+
+    await Promise.all([
+        fetchUserData(),
+        fetchCreditHistory(),
+        fetchPaymentHistory(),
+        fetchServerData()
+    ]);
+}
+
+async function fetchServerData() {
+    const response = await oHttp.get('/getData');
+    const servers = response.response.body;
+    
+    const serversList = document.getElementById('serversList');
+    serversList.innerHTML = servers.map(server => {
+        const status = getServerStatus(server);
+        const planDetails = server.active_server_plan_details;
+        
+        return `
+            <div class="bg-gray-800 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2 cursor-pointer" onclick="toggleServerDetails('${server._id}')">
+                    <div class="flex items-center space-x-4">
+                        <h3 class="text-lg font-semibold">${server.name}</h3>
+                        <span class="${status.class} px-2 py-1 rounded text-sm">${status.text}</span>
+                    </div>
+                    <svg class="w-6 h-6 transform transition-transform" id="arrow-${server._id}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+                <div class="hidden space-y-2" id="details-${server._id}">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-400">Plan:</span> ${planDetails.plan_name}
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Cost:</span> ${planDetails.cost} credits/month
+                        </div>
+                        <div>
+                            <span class="text-gray-400">RAM:</span> ${planDetails.ram/1024} GB
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Players:</span> ${server.player_count}/${planDetails.max_players}
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Version:</span> ${server.server_version?.version || 'Unknown'}
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Disk:</span> ${planDetails.diskSize}
+                        </div>
+                        <div>
+                            <span class="text-gray-400">CPU:</span> ${planDetails.cpu.limit}
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Backup slots:</span> ${planDetails.backup_slots}
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <a href="/server/${server._id}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            Manage Server
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getServerStatus(server) {
+    if (server.suspended) {
+        return { text: 'Suspended', class: 'bg-red-500 text-white' };
+    }
+    
+    switch (server.status) {
+        case 'SERVICE_OFFLINE':
+            return { text: 'Hibernating', class: 'bg-gray-500 text-white' };
+        case 'OFFLINE':
+            return { text: 'Offline', class: 'bg-red-500 text-white' };
+        case 'STARTING':
+            return { text: 'Starting', class: 'bg-yellow-500 text-white' };
+        case 'ONLINE':
+            return { text: 'Online', class: 'bg-green-500 text-white' };
+        default:
+            return { text: server.status, class: 'bg-gray-500 text-white' };
+    }
+}
+
+async function fetchUserData() {
+    const response = await oHttp.get(`/proxy/v2/user/${userId}`);
+    const userData = response.response.body.user;
+
+    document.getElementById('emailInput').value = userData.email || 'No email set';
+    document.getElementById('usernameInput').value = userData.username || 'No username set';
+
+    const accountInfo = document.getElementById('accountInfo');
+    accountInfo.innerHTML = `
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+                <span class="text-gray-400">Last Login:</span>
+                <span>${new Date(userData.last_login).toLocaleString()}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Account Created:</span>
+                <span>${new Date(userData.created_at).toLocaleString()}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Servers:</span>
+                <span>${userData.order_servers.length}/${userData.server_limit}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Current Credits:</span>
+                <span>${userData.credits}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Email Verified:</span>
+                <span>${userData.email_verified ? 'Yes' : 'No'}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Email 2FA:</span>
+                <span>${userData.email_2fa_enabled ? 'Enabled' : 'Disabled'}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-400">GamerSafer 2FA:</span>
+                <span>${userData.gs_2fa_enabled ? 'Enabled' : 'Disabled'}</span>
+            </div>
+            <br />
+            <br />
+        </div>
+    `;
+
+    updateMCStatus(userData.minecraftName);
+}
+
+function switchTab(tab) {
+    // Update button states
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active', 'bg-blue-600');
+        button.classList.add('bg-gray-800');
+    });
+    document.querySelector(`button[onclick="switchTab('${tab}')"]`).classList.add('active', 'bg-blue-600');
+    document.querySelector(`button[onclick="switchTab('${tab}')"]`).classList.remove('bg-gray-800');
+
+    // Show selected tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    document.getElementById(`${tab}-tab`).classList.remove('hidden');
+}
+
+function toggleServerDetails(serverId) {
+    const details = document.getElementById(`details-${serverId}`);
+    const arrow = document.getElementById(`arrow-${serverId}`);
+    details.classList.toggle('hidden');
+    arrow.style.transform = details.classList.contains('hidden') ? '' : 'rotate(180deg)';
+}
+
+class HistoryManager {
+    constructor(type) {
+        this.type = type;
+        this.data = [];
+        this.filteredData = [];
+        this.currentPage = 1;
+        this.itemsPerPage = 10;
+        this.searchQuery = '';
+        this.sortField = 'date';
+        
+        this.elements = {
+            table: document.getElementById(`${type}History`),
+            search: document.getElementById(`${type}Search`),
+            sort: document.getElementById(`${type}Sort`),
+            prevBtn: document.getElementById(`${type}PrevPage`),
+            nextBtn: document.getElementById(`${type}NextPage`),
+            pageInfo: document.getElementById(`${type}PageInfo`)
+        };
+        
+        this.initializeListeners();
+    }
+    
+    initializeListeners() {
+        this.elements.search.addEventListener('input', () => {
+            this.searchQuery = this.elements.search.value.toLowerCase();
+            this.currentPage = 1;
+            this.updateView();
+        });
+        
+        this.elements.sort.addEventListener('change', () => {
+            this.sortField = this.elements.sort.value;
+            this.updateView();
+        });
+        
+        this.elements.prevBtn.addEventListener('click', () => {
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.updateView();
+            }
+        });
+        
+        this.elements.nextBtn.addEventListener('click', () => {
+            if (this.currentPage < this.getTotalPages()) {
+                this.currentPage++;
+                this.updateView();
+            }
+        });
+    }
+    
+    setData(data) {
+        this.data = data;
+        this.updateView();
+    }
+    
+    filterData() {
+        this.filteredData = this.data.filter(item => {
+            const searchFields = this.type === 'credit' 
+                ? [item.desc, item.type]
+                : [item.type];
+            return searchFields.some(field => field?.toLowerCase().includes(this.searchQuery));
+        });
+    }
+    
+    sortData() {
+        this.filteredData.sort((a, b) => {
+            switch (this.sortField) {
+                case 'date':
+                    return new Date(b.time) - new Date(a.time);
+                case 'credits':
+                    return this.type === 'credit' 
+                        ? a.price - b.price
+                        : a.credits - b.credits;
+                case 'type':
+                    return (a.type || '').localeCompare(b.type || '');
+                default:
+                    return 0;
+            }
+        });
+    }
+    
+    getTotalPages() {
+        return Math.ceil(this.filteredData.length / this.itemsPerPage);
+    }
+    
+    updateView() {
+        this.filterData();
+        this.sortData();
+        
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = start + this.itemsPerPage;
+        const pageData = this.filteredData.slice(start, end);
+        
+        this.elements.table.innerHTML = this.type === 'credit' 
+            ? this.renderCreditRows(pageData)
+            : this.renderPaymentRows(pageData);
+            
+        this.updatePagination();
+    }
+    
+    renderCreditRows(data) {
+        return data.map(tx => {
+            const isNegative = tx.price <= 0;
+            const priceClass = isNegative ? 'text-red-400' : 'text-green-400';
+            return `
+                <tr class="border-t border-gray-700">
+                    <td class="px-6 py-4">${new Date(tx.time).toLocaleString()}</td>
+                    <td class="px-6 py-4 ${priceClass}">${isNegative ? '-' : '+'}${Math.abs(tx.price)}</td>
+                    <td class="px-6 py-4">${tx.desc || 'No description'}</td>
+                    <td class="px-6 py-4">${tx.type || 'Purchase'}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    renderPaymentRows(data) {
+        return data.map(payment => `
+            <tr class="border-t border-gray-700">
+                <td class="px-6 py-4">${new Date(payment.time).toLocaleString()}</td>
+                <td class="px-6 py-4">$${(payment.price / 100).toFixed(2)}</td>
+                <td class="px-6 py-4">${payment.type || 'Purchase'}</td>
+                <td class="px-6 py-4">${payment.credits}</td>
+            </tr>
+        `).join('');
+    }
+    
+    updatePagination() {
+        const totalPages = this.getTotalPages();
+        this.elements.pageInfo.textContent = `Page ${this.currentPage} of ${totalPages}`;
+        this.elements.prevBtn.disabled = this.currentPage === 1;
+        this.elements.nextBtn.disabled = this.currentPage === totalPages;
+    }
+}
+
+// Initialize managers
+const creditManager = new HistoryManager('credit');
+const paymentManager = new HistoryManager('payment');
+
+// Update fetch functions
+async function fetchCreditHistory() {
+    try {
+        const response = await oHttp.get(`/proxy/user/${userId}/credit/transactions`);
+        if (!response?.response?.body) throw new Error('No data received');
+        const transactions = Array.isArray(response.response.body.transactions) 
+            ? response.response.body.transactions 
+            : [];
+        creditManager.setData(transactions);
+    } catch (error) {
+        console.error('Failed to fetch credit history:', error);
+        document.getElementById('creditHistory').innerHTML = 
+            '<tr><td colspan="4" class="px-6 py-4 text-center text-red-400">Failed to load credit history</td></tr>';
+    }
+}
+
+async function fetchPaymentHistory() {
+    try {
+        const response = await oHttp.get(`/proxy/user/${userId}/payments`);
+        if (!response?.response?.body) throw new Error('No data received');
+        const payments = Array.isArray(response.response.body.payments) 
+            ? response.response.body.payments 
+            : [];
+        paymentManager.setData(payments);
+    } catch (error) {
+        console.error('Failed to fetch payment history:', error);
+        document.getElementById('paymentHistory').innerHTML = 
+            '<tr><td colspan="4" class="px-6 py-4 text-center text-red-400">Failed to load payment history</td></tr>';
+    }
+}
+
+function updateMCStatus(minecraftName) {
+    const statusDiv = document.getElementById('mcAccountStatus');
+    const linkBtn = document.getElementById('linkMCBtn');
+    const unlinkBtn = document.getElementById('unlinkMCBtn');
+
+    if (minecraftName) {
+        statusDiv.textContent = `Linked to: ${minecraftName}`;
+        linkBtn.classList.add('hidden');
+        unlinkBtn.classList.remove('hidden');
+    } else {
+        statusDiv.textContent = 'No Minecraft account linked';
+        linkBtn.classList.remove('hidden');
+        unlinkBtn.classList.add('hidden');
+    }
+}
+
+async function linkMC() {
+    try {
+        const response = await oHttp.post(`/proxy/user/${userId}/minecraft/code`);
+        showAlert(`Your link code is: ${response.response.body.code}`, 'info');
+    } catch (error) {
+        errorAlert('Failed to generate link code');
+        console.error('MC link error:', error);
+    }
+}
+
+async function unlinkMC() {
+    if (!await confirm('Are you sure you want to unlink your Minecraft account?')) return;
+
+    try {
+        await oHttp.post(`/proxy/user/${userId}/minecraft/link/remove`);
+        await fetchUserData();
+        showAlert('Minecraft account unlinked successfully', 'info');
+    } catch (error) {
+        errorAlert('Failed to unlink Minecraft account');
+        console.error('MC unlink error:', error);
+    }
+}
+
+async function viewGDPR() {
+    try {
+        const response = await oHttp.get(`/proxy/user/gdpr/${userId}`);
+        const blob = new Blob([JSON.stringify(response.response.body)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        errorAlert('Failed to open GDPR data');
+        console.error('GDPR error:', error);
+    }
+}
+
+// Export functions to window so you can use it in the inspector console
+window.linkMC = linkMC;
+window.unlinkMC = unlinkMC;
+window.viewGDPR = viewGDPR;
+window.switchTab = switchTab;
+window.toggleServerDetails = toggleServerDetails;
+
+initializeUser();
+</script>

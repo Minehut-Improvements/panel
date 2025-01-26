@@ -58,8 +58,8 @@ const oHttp = {
             throw {
                 error: error,
                 message: error.message,
-                connection: conn,
-                conn: conn
+                connection: error.connection,
+                conn: error.conn
             };
         }
     },
