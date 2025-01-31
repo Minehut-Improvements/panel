@@ -1,3 +1,6 @@
+# Archived and will not be maintained
+This panel is no longer being maintained. You may use the code inside however you want, except to cause harm or damage to anything or anyone.
+
 # Our Minehut Panel
 This frontend runs on Minehut's Dev servers. You must make a new account there if you don't already have one. You cannot use your production ("normal") minehut account. If you do not know what this means, just follow the login steps, but make an account first.
 If for whatever reason you don't want to use the dev servers, it is extremely easy to switch over to the normal ones (just remove the `.dev` in all API urls)
